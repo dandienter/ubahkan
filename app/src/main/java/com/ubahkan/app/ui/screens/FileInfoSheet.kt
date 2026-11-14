@@ -36,7 +36,7 @@ import java.util.Locale
 // temp berkas terpilih, lalu menampilkan format, durasi, ukuran, resolusi,
 // codec video/audio, dan bitrate. Sifatnya hanya tampil, tidak membuat job.
 
-private data class MediaInfoData(
+internal data class MediaInfoData(
     val format: String,
     val durationText: String?,
     val resolution: String?,
@@ -57,7 +57,7 @@ private fun formatInfoDuration(totalSeconds: Double): String {
     }
 }
 
-private fun probeMediaInfo(
+internal fun probeMediaInfo(
     context: android.content.Context,
     file: SelectedFileItem
 ): MediaInfoData? {

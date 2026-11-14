@@ -413,6 +413,20 @@ fun ToolActionSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    val videoTargetMb = if (videoCustomMb.isNotBlank()) {
+                        videoCustomMb.replace(',', '.').toDoubleOrNull()
+                    } else {
+                        videoPresetMb.toDouble()
+                    }
+                    if (videoTargetMb != null && videoTargetMb > 0.0) {
+                        Text(
+                            text = strings.estimateValue(
+                                formatFileSize((videoTargetMb * 1024 * 1024).toLong())
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
                 ToolOperation.COMPRESS_IMAGE -> {
@@ -441,6 +455,20 @@ fun ToolActionSheet(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
+                    val imageTargetKb = if (imageCustomKb.isNotBlank()) {
+                        imageCustomKb.replace(',', '.').toDoubleOrNull()
+                    } else {
+                        imagePresetKb.toDouble()
+                    }
+                    if (imageTargetKb != null && imageTargetKb > 0.0) {
+                        Text(
+                            text = strings.estimateValue(
+                                formatFileSize((imageTargetKb * 1024).toLong())
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
                 ToolOperation.TRIM_VIDEO -> {

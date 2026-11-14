@@ -32,6 +32,8 @@ import com.ubahkan.app.core.SelectedFileItem
 import com.ubahkan.app.ui.components.UbahkanSectionLabel
 import com.ubahkan.app.ui.components.rememberPressScale
 import com.ubahkan.app.ui.components.formatFileSize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.ubahkan.app.ui.theme.UbahkanInstantBolt
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -87,6 +89,11 @@ fun BottomSheetConverter(
                 put(srcExt, defaultQuality)
             }
         }
+    }
+
+    // Tujuan cepat per kelompok (0: Status WA, 1: Ukuran Kecil, 2: Kualitas Terbaik)
+    val goalPerGroup = remember(groupedFiles) {
+        mutableStateMapOf<String, Int>()
     }
 
     // Pilihan Gabung/Pisahkan PDF per grup gambar
@@ -238,6 +245,99 @@ fun BottomSheetConverter(
                                 }
                             }
 
+                            // Info berkas: ringkasan nyata berkas kelompok ini.
+                            // Detail media dibaca memakai probe yang sama dengan
+                            // FileInfoSheet (FFprobeKit), bukan pipa baru.
+                            val sampleIsMedia = sampleFile.mimeType.startsWith("video/") ||
+                                sampleFile.mimeType.startsWith("audio/")
+                            var groupMediaInfo by remember(srcExt) { mutableStateOf<MediaInfoData?>(null) }
+                            LaunchedEffect(srcExt) {
+                                if (sampleIsMedia) {
+                                    groupMediaInfo = withContext(Dispatchers.IO) {
+                                        probeMediaInfo(context, sampleFile)
+                                    }
+                                }
+                            }
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    Text(
+                                        text = strings.sheetMediaInfoHeader,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (filesInGroup.size == 1) {
+                                        Text(
+                                            text = sampleFile.fileName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    val groupSize = filesInGroup.sumOf { it.sizeBytes }
+                                    if (groupSize > 0) {
+                                        Text(
+                                            text = "${strings.infoSizeLabel}: ${formatFileSize(groupSize)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    groupMediaInfo?.let { info ->
+                                        info.durationText?.let {
+                                            Text(
+                                                text = "${strings.infoDurationLabel}: $it",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        info.resolution?.let {
+                                            Text(
+                                                text = "${strings.infoResolutionLabel}: $it",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        info.videoCodec?.let {
+                                            Text(
+                                                text = "${strings.infoVideoCodecLabel}: $it",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        info.audioCodec?.let {
+                                            Text(
+                                                text = "${strings.infoAudioCodecLabel}: $it",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        info.bitrateText?.let {
+                                            Text(
+                                                text = "${strings.infoBitrateLabel}: $it",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                    val srcExplain = strings.formatExplain(srcExt)
+                                    if (srcExplain.isNotEmpty()) {
+                                        Text(
+                                            text = "${strings.sheetSourceFormatLabel}: $srcExplain",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
                             // Target format chips
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
@@ -250,7 +350,10 @@ fun BottomSheetConverter(
 
                                     FilterChip(
                                         selected = isSelected,
-                                        onClick = { targetFormatPerGroup[srcExt] = targetOption },
+                                        onClick = {
+                                            targetFormatPerGroup[srcExt] = targetOption
+                                            goalPerGroup.remove(srcExt)
+                                        },
                                         label = {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                                 Text(
@@ -346,7 +449,10 @@ fun BottomSheetConverter(
                                                     .background(
                                                         if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent
                                                     )
-                                                    .clickable { qualityPerGroup[srcExt] = qIdx },
+                                                    .clickable {
+                                                        qualityPerGroup[srcExt] = qIdx
+                                                        goalPerGroup.remove(srcExt)
+                                                    },
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Row(
@@ -365,6 +471,101 @@ fun BottomSheetConverter(
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+
+                            // Tujuan cepat: preset yang benar-benar menerapkan
+                            // format dan kualitas yang didukung mesin saat ini
+                            val currentGoal = goalPerGroup[srcExt]
+                            Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                UbahkanSectionLabel(text = strings.goalHeader)
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    val goalOptions = listOf(
+                                        Triple(strings.goalWhatsApp, 0, {
+                                            availableTargets.firstOrNull { it.equals("mp4", ignoreCase = true) }
+                                                ?.let { targetFormatPerGroup[srcExt] = it }
+                                            qualityPerGroup[srcExt] = 1
+                                            goalPerGroup[srcExt] = 0
+                                        }),
+                                        Triple(strings.goalSmallSize, 1, {
+                                            qualityPerGroup[srcExt] = 2
+                                            goalPerGroup[srcExt] = 1
+                                        }),
+                                        Triple(strings.goalBestQuality, 2, {
+                                            qualityPerGroup[srcExt] = 0
+                                            goalPerGroup[srcExt] = 2
+                                        })
+                                    )
+                                    goalOptions.forEach { (label, goalIdx, applyGoal) ->
+                                        val isGoalSelected = currentGoal == goalIdx
+                                        FilterChip(
+                                            selected = isGoalSelected,
+                                            onClick = applyGoal,
+                                            label = {
+                                                Text(
+                                                    label,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 11.sp
+                                                )
+                                            },
+                                            shape = RoundedCornerShape(50),
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                containerColor = MaterialTheme.colorScheme.surface,
+                                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                selectedContainerColor = MaterialTheme.colorScheme.onBackground,
+                                                selectedLabelColor = MaterialTheme.colorScheme.background
+                                            ),
+                                            border = if (isGoalSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.onBackground) else BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                                        )
+                                    }
+                                }
+                                if (currentGoal == 0) {
+                                    Text(
+                                        text = strings.goalWhatsAppHint,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            // Perkiraan ukuran hasil untuk konversi ulang media.
+                            // Rasio kasar dari kualitas terpilih; disembunyikan
+                            // bila ukuran asal tidak terbaca atau bukan media.
+                            val groupInputSize = filesInGroup.sumOf { it.sizeBytes }
+                            val estimateRatio = when (currentQuality) {
+                                2 -> 0.35
+                                1 -> 0.60
+                                0 -> 0.90
+                                else -> null
+                            }
+                            if (sampleIsMedia && groupInputSize > 0 && estimateRatio != null) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp),
+                                        verticalArrangement = Arrangement.spacedBy(1.dp)
+                                    ) {
+                                        Text(
+                                            text = strings.estimateTitle,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = strings.estimateValue(
+                                                formatFileSize((groupInputSize * estimateRatio).toLong())
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
                                 }
                             }

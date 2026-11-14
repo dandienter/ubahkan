@@ -65,6 +65,7 @@ fun SettingsScreen(
     var qualityPreset by remember { mutableStateOf(prefs.qualityPreset) }
     var showLicensesDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showGuide by remember { mutableStateOf(false) }
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var isBatteryOk by remember {
@@ -93,6 +94,11 @@ fun SettingsScreen(
             IndonesianStrings.languageSetToast
         }
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    if (showGuide) {
+        GuideScreen(onBackClick = { showGuide = false })
+        return
     }
 
     LazyColumn(
@@ -254,6 +260,16 @@ fun SettingsScreen(
                     title = strings.licensesSectionTitle,
                     desc = strings.licensesSectionSubtitle,
                     onClick = { showLicensesDialog = true }
+                )
+
+                SettingsGroupDivider(indent = false)
+
+                // Panduan: halaman panduan permanen per topik + glosarium
+                SettingsNavRow(
+                    icon = Icons.Outlined.MenuBook,
+                    title = strings.guideTitle,
+                    desc = strings.guideSubtitle,
+                    onClick = { showGuide = true }
                 )
 
                 SettingsGroupDivider(indent = false)

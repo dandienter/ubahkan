@@ -32,6 +32,10 @@ android {
         jniLibs {
             // .so disimpan terkompresi di APK agar unduhan lebih kecil
             useLegacyPackaging = true
+            // OpenCV dan FFmpegKit sama-sama membawa libc++_shared.so;
+            // tanpa pickFirst build gagal di mergeReleaseNativeLibs
+            // (terbukti di run Actions #21 untuk modul Pindai Dokumen).
+            pickFirsts += "lib/arm64-v8a/libc++_shared.so"
         }
     }
 

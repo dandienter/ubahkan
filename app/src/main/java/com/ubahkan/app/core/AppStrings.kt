@@ -41,6 +41,18 @@ interface Strings {
     val welcomeFeaturePrivacyDesc: String
     val btnGetStarted: String
 
+    // Onboarding (Tutorial pertama buka, 4 halaman geser)
+    val onboardSkip: String
+    val onboardNext: String
+    val onboardPage1Title: String
+    val onboardPage1Desc: String
+    val onboardPage2Title: String
+    val onboardPage2Desc: String
+    val onboardPage3Title: String
+    val onboardPage3Desc: String
+    val onboardPage4Title: String
+    val onboardPage4Desc: String
+
     // Home Screen
     val notifBannerTitle: String
     val notifBannerDesc: String
@@ -190,6 +202,23 @@ interface Strings {
     val licensesSectionSubtitle: String
     val licensesDialogIntro: String
 
+    // Guide Screen (Panduan permanen dari Pengaturan)
+    val guideTitle: String
+    val guideSubtitle: String
+    val guideBack: String
+    val guideConvertTitle: String
+    val guideConvertSteps: List<String>
+    val guideCompressTitle: String
+    val guideCompressSteps: List<String>
+    val guideSplitTitle: String
+    val guideSplitSteps: List<String>
+    val guideScanSteps: List<String>
+    val guideHistoryTitle: String
+    val guideHistorySteps: List<String>
+    val guideUpdateTitle: String
+    val guideUpdateSteps: List<String>
+    val guideGlossaryTitle: String
+
     // BottomSheetConverter
     val bottomSheetTitle: String
     fun bottomSheetBatchSubtitle(fileCount: Int, formatCount: Int, sizeStr: String): String
@@ -206,6 +235,17 @@ interface Strings {
     fun btnConvertBatch(count: Int): String
     fun btnMergeAndConvert(count: Int): String
     fun formatExplain(format: String): String
+
+    // Fitur Informatif di sheet konversi
+    val sheetSourceFormatLabel: String
+    val sheetMediaInfoHeader: String
+    val goalHeader: String
+    val goalWhatsApp: String
+    val goalSmallSize: String
+    val goalBestQuality: String
+    val goalWhatsAppHint: String
+    val estimateTitle: String
+    fun estimateValue(size: String): String
 
     // Conversion Banner & Progress Screen
     fun convertingTo(format: String): String
@@ -236,6 +276,16 @@ interface Strings {
     val conversionPartialSuccess: String
     fun summaryPartial(completed: Int, failed: Int): String
     val defaultErrorMsg: String
+
+    // Progres bertahap & laporan banding (Fitur Informatif)
+    val progressStagePreparing: String
+    val progressStageConverting: String
+    val progressStageSaving: String
+    val reportTitle: String
+    fun reportBeforeAfter(before: String, after: String): String
+    fun reportSavedPercent(percent: Int): String
+    fun reportGrownPercent(percent: Int): String
+    val reportSameSize: String
 
     // Queue & Service & Engine (Non-UI)
     val queueWaiting: String
@@ -512,6 +562,17 @@ object IndonesianStrings : Strings {
     override val welcomeFeaturePrivacyDesc = "File Anda tidak pernah meninggalkan ponsel Anda."
     override val btnGetStarted = "Mulai Mengonversi"
 
+    override val onboardSkip = "Lewati"
+    override val onboardNext = "Lanjut"
+    override val onboardPage1Title = "Selamat datang di Ubahkan"
+    override val onboardPage1Desc = "Konversi berkas langsung di HP, tanpa internet, tanpa unggah."
+    override val onboardPage2Title = "Pilih berkas"
+    override val onboardPage2Desc = "Ketuk Pilih Berkas di Beranda atau buka tab Alat, lalu pilih berkas dari perangkat. Kamu juga bisa mengirim berkas dari aplikasi lain lewat menu Bagikan."
+    override val onboardPage3Title = "Atur format dan kualitas"
+    override val onboardPage3Desc = "Pilih format tujuan dan kualitas hasil. Ada juga alat target ukuran untuk mengecilkan berkas sampai batas tertentu, misalnya untuk lampiran atau Status WA."
+    override val onboardPage4Title = "Pindai dokumen dan lainnya"
+    override val onboardPage4Desc = "Foto dokumen kertas bisa dipindai menjadi PDF rapi dengan Pindai Dokumen. Semua hasil tersimpan di Downloads/Ubahkan."
+
     override val notifBannerTitle = "Aktifkan Notifikasi"
     override val notifBannerDesc = "Agar konversi latar belakang tidak dihentikan sistem."
     override val btnAllow = "Izinkan"
@@ -656,6 +717,50 @@ object IndonesianStrings : Strings {
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & pustaka pihak ketiga"
     override val licensesDialogIntro = "Ubahkan didistribusikan di bawah GNU General Public License v3.0 (GPL-3.0) dan menggunakan pustaka open-source berikut:"
 
+    override val guideTitle = "Panduan"
+    override val guideSubtitle = "Cara memakai fitur Ubahkan."
+    override val guideBack = "Kembali"
+    override val guideConvertTitle = "Memulai Konversi"
+    override val guideConvertSteps = listOf(
+        "Ketuk Pilih Berkas di Beranda, atau buka tab Alat lalu pilih Konversi Berkas.",
+        "Pilih satu atau beberapa berkas dari perangkat.",
+        "Tentukan format tujuan dan kualitas untuk tiap kelompok format.",
+        "Ketuk tombol Konversi, lalu tunggu sampai proses selesai."
+    )
+    override val guideCompressTitle = "Kompres ke Ukuran Target"
+    override val guideCompressSteps = listOf(
+        "Buka tab Alat, lalu pilih Kompres Video ke Target atau Kompres Gambar ke Target.",
+        "Pilih berkas yang ingin dikecilkan.",
+        "Pilih ukuran target dari pilihan yang ada, atau isi ukuran lain.",
+        "Ketuk Mulai dan hasil tersimpan di Downloads/Ubahkan."
+    )
+    override val guideSplitTitle = "Potong Otomatis untuk Status WA"
+    override val guideSplitSteps = listOf(
+        "Buka tab Alat, lalu pilih Potong Otomatis.",
+        "Pilih video yang ingin dibagi.",
+        "Pilih potongan setiap 30, 60, atau 90 detik.",
+        "Ketuk Mulai, lalu gunakan tombol Bagikan ke Status WA di layar hasil."
+    )
+    override val guideScanSteps = listOf(
+        "Buka Pindai Dokumen dari Beranda atau tab Alat.",
+        "Foto dokumen atau impor dari galeri, lalu sesuaikan titik sudutnya.",
+        "Pilih filter dokumen, atur kecerahan dan kontras bila perlu, lalu pakai halaman itu.",
+        "Tambah halaman lain bila perlu, lalu ketuk Simpan PDF."
+    )
+    override val guideHistoryTitle = "Membaca Hasil di Riwayat"
+    override val guideHistorySteps = listOf(
+        "Buka tab Riwayat untuk melihat semua berkas hasil.",
+        "Kartu statistik di atas merangkum jumlah berkas dan total ruang yang dihemat.",
+        "Ketuk berkas untuk membukanya, atau gunakan menu aksi untuk berbagi dan menghapus."
+    )
+    override val guideUpdateTitle = "Memeriksa Pembaruan"
+    override val guideUpdateSteps = listOf(
+        "Buka Pengaturan, lalu ketuk Periksa Pembaruan di grup Lainnya.",
+        "Bila ada versi baru, ketuk lagi baris yang sama untuk membuka halaman unduhnya.",
+        "Banner pembaruan juga muncul otomatis di Beranda saat versi baru tersedia."
+    )
+    override val guideGlossaryTitle = "Glosarium Format"
+
     override val bottomSheetTitle = "Konversi File"
     override fun bottomSheetBatchSubtitle(fileCount: Int, formatCount: Int, sizeStr: String) =
         "$fileCount file terpilih • $formatCount format$sizeStr"
@@ -672,6 +777,16 @@ object IndonesianStrings : Strings {
     override val btnConvert = "Konversi"
     override fun btnConvertBatch(count: Int) = "Konversi ($count File)"
     override fun btnMergeAndConvert(count: Int) = "Gabung & Konversi ($count File)"
+
+    override val sheetSourceFormatLabel = "Format asal"
+    override val sheetMediaInfoHeader = "Detail berkas"
+    override val goalHeader = "Tujuan"
+    override val goalWhatsApp = "Buat Status WA"
+    override val goalSmallSize = "Ukuran Kecil"
+    override val goalBestQuality = "Kualitas Terbaik"
+    override val goalWhatsAppHint = "Untuk video panjang, bagi rata dengan Potong Otomatis di tab Alat agar pas untuk Status WA."
+    override val estimateTitle = "Perkiraan hasil"
+    override fun estimateValue(size: String) = "Sekitar $size (perkiraan)"
     override fun formatExplain(format: String): String = when (format.lowercase()) {
         "mp3" -> "Audio saja dari berkas sumber, ukuran kecil dan bisa diputar di semua perangkat."
         "m4a" -> "Audio ringkas berkualitas baik, umum dipakai di perangkat Apple."
@@ -688,6 +803,7 @@ object IndonesianStrings : Strings {
         "webp" -> "Format gambar modern, lebih kecil dari JPG pada kualitas setara."
         "bmp" -> "Gambar tanpa kompres, kualitas penuh tetapi ukuran besar."
         "pdf" -> "Dokumen yang tampilannya tetap sama di semua perangkat."
+        "heic", "heif" -> "Format foto khas iPhone dan Samsung, hemat ruang tetapi belum didukung semua aplikasi. Ubah ke JPG agar mudah dibuka."
         "txt" -> "Teks polos tanpa format, bisa dibuka di aplikasi apa saja."
         else -> ""
     }
@@ -729,6 +845,15 @@ object IndonesianStrings : Strings {
     override val conversionPartialSuccess = "Konversi Selesai Sebagian"
     override fun summaryPartial(completed: Int, failed: Int) = "$completed berhasil, $failed gagal diproses."
     override val defaultErrorMsg = "Terjadi kesalahan saat memproses file."
+
+    override val progressStagePreparing = "Menyiapkan berkas"
+    override val progressStageConverting = "Mengonversi"
+    override val progressStageSaving = "Menyimpan hasil"
+    override val reportTitle = "Perbandingan ukuran"
+    override fun reportBeforeAfter(before: String, after: String) = "$before menjadi $after"
+    override fun reportSavedPercent(percent: Int) = "Lebih kecil $percent%"
+    override fun reportGrownPercent(percent: Int) = "Lebih besar $percent%"
+    override val reportSameSize = "Ukuran hampir sama"
 
     override val queueWaiting = "Menunggu antrean..."
     override val queueCompleted = "Konversi Selesai"
@@ -1001,6 +1126,17 @@ object EnglishStrings : Strings {
     override val welcomeFeaturePrivacyDesc = "Your files never leave your device."
     override val btnGetStarted = "Start Converting"
 
+    override val onboardSkip = "Skip"
+    override val onboardNext = "Next"
+    override val onboardPage1Title = "Welcome to Ubahkan"
+    override val onboardPage1Desc = "Convert files right on your phone, no internet, no uploads."
+    override val onboardPage2Title = "Pick a file"
+    override val onboardPage2Desc = "Tap Select File on Home or open the Tools tab, then choose a file from your device. You can also send files from other apps through the Share menu."
+    override val onboardPage3Title = "Set format and quality"
+    override val onboardPage3Desc = "Choose the target format and result quality. Target-size tools can also shrink a file to a set limit, handy for attachments or WA Status."
+    override val onboardPage4Title = "Scan documents and more"
+    override val onboardPage4Desc = "Turn paper documents into a tidy PDF with Scan Document. All results are saved to Downloads/Ubahkan."
+
     override val notifBannerTitle = "Enable Notifications"
     override val notifBannerDesc = "Keeps background conversions running reliably."
     override val btnAllow = "Allow"
@@ -1145,6 +1281,50 @@ object EnglishStrings : Strings {
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & third-party libraries"
     override val licensesDialogIntro = "Ubahkan is distributed under the GNU General Public License v3.0 (GPL-3.0) and uses the following open-source libraries:"
 
+    override val guideTitle = "Guide"
+    override val guideSubtitle = "How to use Ubahkan features."
+    override val guideBack = "Back"
+    override val guideConvertTitle = "Starting a Conversion"
+    override val guideConvertSteps = listOf(
+        "Tap Select File on Home, or open the Tools tab and choose Convert File.",
+        "Pick one or more files from your device.",
+        "Set the target format and quality for each format group.",
+        "Tap the Convert button and wait for the process to finish."
+    )
+    override val guideCompressTitle = "Compress to a Target Size"
+    override val guideCompressSteps = listOf(
+        "Open the Tools tab, then choose Compress Video to Size or Compress Image to Size.",
+        "Pick the file you want to shrink.",
+        "Choose a preset target size, or enter a custom size.",
+        "Tap Start and the result is saved to Downloads/Ubahkan."
+    )
+    override val guideSplitTitle = "Auto Split for WA Status"
+    override val guideSplitSteps = listOf(
+        "Open the Tools tab, then choose Auto Split.",
+        "Pick the video you want to split.",
+        "Choose parts of every 30, 60, or 90 seconds.",
+        "Tap Start, then use the Share to WA Status button on the result screen."
+    )
+    override val guideScanSteps = listOf(
+        "Open Scan Document from Home or the Tools tab.",
+        "Photograph the document or import from the gallery, then adjust the corner points.",
+        "Pick a document filter, adjust brightness and contrast if needed, then use the page.",
+        "Add more pages if needed, then tap Save as PDF."
+    )
+    override val guideHistoryTitle = "Finding Results in History"
+    override val guideHistorySteps = listOf(
+        "Open the History tab to see all result files.",
+        "The stats card at the top sums up the file count and total space saved.",
+        "Tap a file to open it, or use its action menu to share or delete it."
+    )
+    override val guideUpdateTitle = "Checking for Updates"
+    override val guideUpdateSteps = listOf(
+        "Open Settings, then tap Check for Updates in the Other group.",
+        "If a newer version exists, tap the same row again to open its download page.",
+        "An update banner also appears automatically on Home when a new version is available."
+    )
+    override val guideGlossaryTitle = "Format Glossary"
+
     override val bottomSheetTitle = "Convert Files"
     override fun bottomSheetBatchSubtitle(fileCount: Int, formatCount: Int, sizeStr: String) =
         "$fileCount files selected • $formatCount formats$sizeStr"
@@ -1161,6 +1341,16 @@ object EnglishStrings : Strings {
     override val btnConvert = "Convert"
     override fun btnConvertBatch(count: Int) = "Convert ($count Files)"
     override fun btnMergeAndConvert(count: Int) = "Merge & Convert ($count Files)"
+
+    override val sheetSourceFormatLabel = "Source format"
+    override val sheetMediaInfoHeader = "File details"
+    override val goalHeader = "Goal"
+    override val goalWhatsApp = "For WA Status"
+    override val goalSmallSize = "Small Size"
+    override val goalBestQuality = "Best Quality"
+    override val goalWhatsAppHint = "For long videos, split them evenly with Auto Split in the Tools tab to fit WA Status."
+    override val estimateTitle = "Estimated result"
+    override fun estimateValue(size: String) = "About $size (estimate)"
     override fun formatExplain(format: String): String = when (format.lowercase()) {
         "mp3" -> "Audio only from the source file, small in size and playable everywhere."
         "m4a" -> "Compact audio with good quality, common on Apple devices."
@@ -1177,6 +1367,7 @@ object EnglishStrings : Strings {
         "webp" -> "Modern image format, smaller than JPG at the same quality."
         "bmp" -> "Uncompressed image, full quality but large in size."
         "pdf" -> "A document that looks the same on every device."
+        "heic", "heif" -> "Photo format from iPhones and Samsung phones, space-saving but not supported everywhere. Convert to JPG for easy opening."
         "txt" -> "Plain text without formatting, opens in any app."
         else -> ""
     }
@@ -1218,6 +1409,15 @@ object EnglishStrings : Strings {
     override val conversionPartialSuccess = "Conversion Partially Completed"
     override fun summaryPartial(completed: Int, failed: Int) = "$completed succeeded, $failed failed."
     override val defaultErrorMsg = "An error occurred while processing the file."
+
+    override val progressStagePreparing = "Preparing file"
+    override val progressStageConverting = "Converting"
+    override val progressStageSaving = "Saving result"
+    override val reportTitle = "Size comparison"
+    override fun reportBeforeAfter(before: String, after: String) = "$before to $after"
+    override fun reportSavedPercent(percent: Int) = "$percent% smaller"
+    override fun reportGrownPercent(percent: Int) = "$percent% larger"
+    override val reportSameSize = "About the same size"
 
     override val queueWaiting = "Waiting in queue..."
     override val queueCompleted = "Conversion Completed"

@@ -186,6 +186,23 @@ fun ProgressScreen(
                         } else null
                     )
 
+                    // Label tahap dari sinyal nyata antrean: belum ada job
+                    // aktif berarti menyiapkan; progres akhir atau pesan
+                    // finalisasi engine berarti menyimpan hasil.
+                    val stageLabel = when {
+                        activeJob == null -> strings.progressStagePreparing
+                        currentJob != null && (currentJob.progress >= 95 ||
+                            currentJob.progressMessage == strings.engineFinalizingValidating) ->
+                            strings.progressStageSaving
+                        else -> strings.progressStageConverting
+                    }
+                    Text(
+                        text = stageLabel,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
                     if (currentJob != null) {
                         Text(
                             text = currentJob.originalFileName,
@@ -288,6 +305,95 @@ fun ProgressScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
+
+                // Laporan banding ukuran sebelum dan sesudah, dari data job
+                // yang sama dengan akumulasi statistik Riwayat. Bila ukuran
+                // tidak terbaca, hanya nama berkas dan lokasi yang tampil.
+                val completedJobs = queueState.filter { it.status == JobStatus.COMPLETED }
+                val reportData = remember(queueState) {
+                    var beforeTotal = 0L
+                    var afterTotal = 0L
+                    completedJobs.forEach { job ->
+                        val inSize = com.ubahkan.app.getFileSizeFromUri(context, job.inputUri)
+                        val outPaths = (listOfNotNull(job.outputFilePath) + job.outputFilePaths).distinct()
+                        val outSize = outPaths.sumOf { path ->
+                            File(path).takeIf { it.exists() }?.length() ?: 0L
+                        }
+                        if (inSize > 0 && outSize > 0) {
+                            beforeTotal += inSize
+                            afterTotal += outSize
+                        }
+                    }
+                    val firstOutputName = completedJobs.firstOrNull()
+                        ?.let { job ->
+                            (listOfNotNull(job.outputFilePath) + job.outputFilePaths)
+                                .firstOrNull()
+                                ?.let { File(it).name }
+                        }
+                    Triple(beforeTotal, afterTotal, firstOutputName)
+                }
+                val (reportBefore, reportAfter, reportName) = reportData
+                if (reportName != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(
+                                text = strings.reportTitle,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            if (reportBefore > 0 && reportAfter > 0) {
+                                Text(
+                                    text = strings.reportBeforeAfter(
+                                        formatFileSize(reportBefore),
+                                        formatFileSize(reportAfter)
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                val percentText = when {
+                                    reportAfter < reportBefore ->
+                                        strings.reportSavedPercent(
+                                            ((reportBefore - reportAfter) * 100 / reportBefore).toInt()
+                                        )
+                                    reportAfter > reportBefore ->
+                                        strings.reportGrownPercent(
+                                            ((reportAfter - reportBefore) * 100 / reportBefore).toInt()
+                                        )
+                                    else -> strings.reportSameSize
+                                }
+                                Text(
+                                    text = percentText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            if (completedJobs.size == 1) {
+                                Text(
+                                    text = reportName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Text(
+                                text = strings.homeSavedFooter,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.weight(1f))
 
