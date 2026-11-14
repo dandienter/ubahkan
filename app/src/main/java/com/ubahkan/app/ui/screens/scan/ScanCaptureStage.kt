@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -145,7 +146,7 @@ fun ScanCaptureStage(
     }
     val launchGallery = {
         galleryLauncher.launch(
-            ActivityResultContracts.PickVisualMediaRequest(
+            PickVisualMediaRequest(
                 ActivityResultContracts.PickVisualMedia.ImageOnly
             )
         )
