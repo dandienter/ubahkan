@@ -95,6 +95,113 @@ fun ToolsScreen(
             )
         }
 
+        // Batch 2: alat video, PDF, dan audio lanjutan
+        item {
+            SectionHeading(
+                title = strings.toolsActionsBatch2Title,
+                subtitle = strings.toolsActionsBatch2Subtitle
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolMergeVideoTitle,
+                description = strings.toolMergeVideoDesc,
+                icon = Icons.Default.MergeType,
+                onClick = { onPickFileForTool(ToolOperation.MERGE_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolSplitPdfTitle,
+                description = strings.toolSplitPdfDesc,
+                icon = Icons.Default.ContentCopy,
+                onClick = { onPickFileForTool(ToolOperation.SPLIT_PDF, "application/pdf") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolMergePdfTitle,
+                description = strings.toolMergePdfDesc,
+                icon = Icons.Default.PictureAsPdf,
+                onClick = { onPickFileForTool(ToolOperation.MERGE_PDF, "application/pdf") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolHardsubTitle,
+                description = strings.toolHardsubDesc,
+                icon = Icons.Default.Subtitles,
+                onClick = { onPickFileForTool(ToolOperation.HARDSUB, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolCropTitle,
+                description = strings.toolCropDesc,
+                icon = Icons.Default.Crop,
+                onClick = { onPickFileForTool(ToolOperation.CROP_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolResizeTitle,
+                description = strings.toolResizeDesc,
+                icon = Icons.Default.AspectRatio,
+                onClick = { onPickFileForTool(ToolOperation.RESIZE_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolMuteTitle,
+                description = strings.toolMuteDesc,
+                icon = Icons.Default.VolumeOff,
+                onClick = { onPickFileForTool(ToolOperation.MUTE_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolReplaceAudioTitle,
+                description = strings.toolReplaceAudioDesc,
+                icon = Icons.Default.Audiotrack,
+                onClick = { onPickFileForTool(ToolOperation.REPLACE_AUDIO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolHeicTitle,
+                description = strings.toolHeicDesc,
+                icon = Icons.Default.Image,
+                onClick = { onPickFileForTool(ToolOperation.HEIC_TO_JPG, "image/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolInfoTitle,
+                description = strings.toolInfoDesc,
+                icon = Icons.Default.Info,
+                onClick = { onPickFileForTool(ToolOperation.FILE_INFO, "*/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolNormalizeTitle,
+                description = strings.toolNormalizeDesc,
+                icon = Icons.Default.GraphicEq,
+                onClick = { onPickFileForTool(ToolOperation.NORMALIZE_VOLUME, "*/*") }
+            )
+        }
+
         // Conversion Tools Section
         item {
             SectionHeading(

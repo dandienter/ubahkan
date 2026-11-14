@@ -306,6 +306,74 @@ interface Strings {
     val toolErrNotVideo: String
     val toolErrNotImage: String
 
+    // Tool Operations - Engine (Batch 2)
+    val engineMergingVideos: String
+    val engineSplittingPdf: String
+    fun engineSplittingPdfPage(current: Int, total: Int): String
+    val engineErrPdfRangeInvalid: String
+    val engineMergingPdfs: String
+    fun engineMergingPdfPage(current: Int, total: Int): String
+    val engineBurningSubtitles: String
+    val engineErrSubtitleMissing: String
+    val engineCroppingVideo: String
+    val engineResizingVideo: String
+    val engineMutingVideo: String
+    val engineReplacingAudio: String
+    val engineErrAudioMissing: String
+    val engineConvertingHeic: String
+    val engineErrHeicUnsupported: String
+    fun engineErrHeicDecode(msg: String): String
+    val engineNormalizingVolume: String
+
+    // Tool Operations - UI (Batch 2)
+    val toolsActionsBatch2Title: String
+    val toolsActionsBatch2Subtitle: String
+    val toolMergeVideoTitle: String
+    val toolMergeVideoDesc: String
+    fun toolSelectedFilesInfo(count: Int): String
+    val toolErrNeedTwoFiles: String
+    val toolSplitPdfTitle: String
+    val toolSplitPdfDesc: String
+    val toolPdfRangeLabel: String
+    val toolPdfRangeHint: String
+    val toolErrNotPdf: String
+    val toolMergePdfTitle: String
+    val toolMergePdfDesc: String
+    val toolHardsubTitle: String
+    val toolHardsubDesc: String
+    val toolSubtitleFileLabel: String
+    val toolPickCompanionButton: String
+    val toolErrCompanionMissing: String
+    val toolErrSubtitleExt: String
+    val toolCropTitle: String
+    val toolCropDesc: String
+    val toolCropRatioLabel: String
+    val toolResizeTitle: String
+    val toolResizeDesc: String
+    val toolResizeLabel: String
+    val toolMuteTitle: String
+    val toolMuteDesc: String
+    val toolReplaceAudioTitle: String
+    val toolReplaceAudioDesc: String
+    val toolAudioFileLabel: String
+    val toolHeicTitle: String
+    val toolHeicDesc: String
+    val toolErrNotHeic: String
+    val toolInfoTitle: String
+    val toolInfoDesc: String
+    val infoFormatLabel: String
+    val infoDurationLabel: String
+    val infoSizeLabel: String
+    val infoResolutionLabel: String
+    val infoVideoCodecLabel: String
+    val infoAudioCodecLabel: String
+    val infoBitrateLabel: String
+    val infoLoading: String
+    val infoFailed: String
+    val toolNormalizeTitle: String
+    val toolNormalizeDesc: String
+    val toolErrNotMedia: String
+
     // Core Validators & Parsers
     val validatorFileNotFound: String
     val validatorNotRegularFile: String
@@ -613,6 +681,71 @@ object IndonesianStrings : Strings {
     override val toolErrNotVideo = "File terpilih bukan video."
     override val toolErrNotImage = "File terpilih bukan gambar."
 
+    override val engineMergingVideos = "Menggabungkan video..."
+    override val toolsActionsBatch2Title = "Alat Video, PDF, dan Audio"
+    override val toolsActionsBatch2Subtitle = "Gabung, pisah, subtitle, crop, dan lainnya."
+    override val toolMergeVideoTitle = "Gabung Video"
+    override val toolMergeVideoDesc = "Sambung dua video atau lebih jadi satu, sesuai urutan pilihan."
+    override fun toolSelectedFilesInfo(count: Int) = "$count berkas terpilih, urutan sesuai pilihan."
+    override val toolErrNeedTwoFiles = "Pilih minimal dua berkas untuk digabung."
+    override val engineSplittingPdf = "Memisahkan halaman PDF..."
+    override fun engineSplittingPdfPage(current: Int, total: Int) = "Memisahkan halaman $current dari $total..."
+    override val engineErrPdfRangeInvalid = "Rentang halaman tidak valid."
+    override val toolSplitPdfTitle = "Pisah PDF"
+    override val toolSplitPdfDesc = "Jadikan tiap halaman PDF sebagai berkas PDF sendiri."
+    override val toolPdfRangeLabel = "Rentang halaman"
+    override val toolPdfRangeHint = "Kosongkan untuk semua halaman, atau isi misalnya 1-3 atau 1,3,5."
+    override val toolErrNotPdf = "File terpilih bukan PDF."
+    override val engineMergingPdfs = "Menggabungkan PDF..."
+    override fun engineMergingPdfPage(current: Int, total: Int) = "Menggabungkan halaman $current dari $total..."
+    override val toolMergePdfTitle = "Gabung PDF"
+    override val toolMergePdfDesc = "Sambung dua PDF atau lebih jadi satu, sesuai urutan pilihan."
+    override val engineBurningSubtitles = "Membakar subtitle ke video..."
+    override val engineErrSubtitleMissing = "Berkas subtitle tidak ditemukan."
+    override val toolHardsubTitle = "Bakar Subtitle (Hardsub)"
+    override val toolHardsubDesc = "Tempel subtitle .srt permanen ke video."
+    override val toolSubtitleFileLabel = "Berkas subtitle (.srt)"
+    override val toolPickCompanionButton = "Pilih berkas"
+    override val toolErrCompanionMissing = "Pilih berkas pendamping dulu."
+    override val toolErrSubtitleExt = "Berkas subtitle harus berekstensi .srt."
+    override val engineCroppingVideo = "Memotong bingkai video..."
+    override val toolCropTitle = "Crop Rasio Video"
+    override val toolCropDesc = "Potong bingkai video ke rasio 9:16, 1:1, atau 16:9 dari tengah."
+    override val toolCropRatioLabel = "Rasio bingkai"
+    override val engineResizingVideo = "Mengubah resolusi video..."
+    override val toolResizeTitle = "Ubah Resolusi Video"
+    override val toolResizeDesc = "Turunkan resolusi video ke 1080p, 720p, 480p, atau 360p."
+    override val toolResizeLabel = "Resolusi target"
+    override val engineMutingVideo = "Membisukan video..."
+    override val toolMuteTitle = "Bisukan Video"
+    override val toolMuteDesc = "Hapus jalur audio dari video, gambar disalin apa adanya."
+    override val engineReplacingAudio = "Mengganti audio video..."
+    override val engineErrAudioMissing = "Berkas audio pengganti tidak ditemukan."
+    override val toolReplaceAudioTitle = "Ganti Audio Video"
+    override val toolReplaceAudioDesc = "Timpa suara video dengan berkas audio lain."
+    override val toolAudioFileLabel = "Berkas audio pengganti"
+    override val engineConvertingHeic = "Mengubah HEIC menjadi JPG..."
+    override val engineErrHeicUnsupported = "Konversi HEIC membutuhkan Android 9 atau lebih baru."
+    override fun engineErrHeicDecode(msg: String) = "Gagal membaca berkas HEIC: $msg"
+    override val toolHeicTitle = "HEIC ke JPG"
+    override val toolHeicDesc = "Ubah foto HEIC atau HEIF dari kamera menjadi JPG."
+    override val toolErrNotHeic = "File terpilih bukan HEIC atau HEIF."
+    override val toolInfoTitle = "Info Berkas"
+    override val toolInfoDesc = "Lihat format, durasi, resolusi, codec, dan bitrate sebuah berkas media."
+    override val infoFormatLabel = "Format"
+    override val infoDurationLabel = "Durasi"
+    override val infoSizeLabel = "Ukuran"
+    override val infoResolutionLabel = "Resolusi"
+    override val infoVideoCodecLabel = "Codec video"
+    override val infoAudioCodecLabel = "Codec audio"
+    override val infoBitrateLabel = "Bitrate"
+    override val infoLoading = "Membaca info berkas..."
+    override val infoFailed = "Tidak dapat membaca info berkas ini."
+    override val engineNormalizingVolume = "Menormalkan volume..."
+    override val toolNormalizeTitle = "Normalisasi Volume"
+    override val toolNormalizeDesc = "Samakan keras suara video atau audio dengan loudnorm satu pass."
+    override val toolErrNotMedia = "File terpilih bukan video atau audio."
+
     override val validatorFileNotFound = "Berkas output tidak ditemukan di sistem penyimpanan."
     override val validatorNotRegularFile = "Path output bukan merupakan berkas reguler."
     override val validatorOutputEmpty = "Berkas output kosong (ukuran 0 byte)."
@@ -918,6 +1051,71 @@ object EnglishStrings : Strings {
     override val toolErrTrimRange = "End time must be after start time and within the video duration."
     override val toolErrNotVideo = "The selected file is not a video."
     override val toolErrNotImage = "The selected file is not an image."
+
+    override val engineMergingVideos = "Merging videos..."
+    override val toolsActionsBatch2Title = "Video, PDF, and Audio Tools"
+    override val toolsActionsBatch2Subtitle = "Merge, split, subtitles, crop, and more."
+    override val toolMergeVideoTitle = "Merge Videos"
+    override val toolMergeVideoDesc = "Join two or more videos into one, in the order you picked them."
+    override fun toolSelectedFilesInfo(count: Int) = "$count files selected, in picking order."
+    override val toolErrNeedTwoFiles = "Pick at least two files to merge."
+    override val engineSplittingPdf = "Splitting PDF pages..."
+    override fun engineSplittingPdfPage(current: Int, total: Int) = "Splitting page $current of $total..."
+    override val engineErrPdfRangeInvalid = "Invalid page range."
+    override val toolSplitPdfTitle = "Split PDF"
+    override val toolSplitPdfDesc = "Turn each PDF page into its own PDF file."
+    override val toolPdfRangeLabel = "Page range"
+    override val toolPdfRangeHint = "Leave empty for all pages, or enter e.g. 1-3 or 1,3,5."
+    override val toolErrNotPdf = "The selected file is not a PDF."
+    override val engineMergingPdfs = "Merging PDFs..."
+    override fun engineMergingPdfPage(current: Int, total: Int) = "Merging page $current of $total..."
+    override val toolMergePdfTitle = "Merge PDFs"
+    override val toolMergePdfDesc = "Join two or more PDFs into one, in the order you picked them."
+    override val engineBurningSubtitles = "Burning subtitles into video..."
+    override val engineErrSubtitleMissing = "Subtitle file not found."
+    override val toolHardsubTitle = "Burn Subtitles (Hardsub)"
+    override val toolHardsubDesc = "Permanently burn .srt subtitles into a video."
+    override val toolSubtitleFileLabel = "Subtitle file (.srt)"
+    override val toolPickCompanionButton = "Pick file"
+    override val toolErrCompanionMissing = "Pick the companion file first."
+    override val toolErrSubtitleExt = "The subtitle file must have the .srt extension."
+    override val engineCroppingVideo = "Cropping video frame..."
+    override val toolCropTitle = "Crop Video Ratio"
+    override val toolCropDesc = "Crop the video frame to 9:16, 1:1, or 16:9 from the center."
+    override val toolCropRatioLabel = "Frame ratio"
+    override val engineResizingVideo = "Resizing video..."
+    override val toolResizeTitle = "Resize Video"
+    override val toolResizeDesc = "Lower a video resolution to 1080p, 720p, 480p, or 360p."
+    override val toolResizeLabel = "Target resolution"
+    override val engineMutingVideo = "Muting video..."
+    override val toolMuteTitle = "Mute Video"
+    override val toolMuteDesc = "Remove the audio track from a video, picture copied as is."
+    override val engineReplacingAudio = "Replacing video audio..."
+    override val engineErrAudioMissing = "Replacement audio file not found."
+    override val toolReplaceAudioTitle = "Replace Video Audio"
+    override val toolReplaceAudioDesc = "Overwrite a video soundtrack with another audio file."
+    override val toolAudioFileLabel = "Replacement audio file"
+    override val engineConvertingHeic = "Converting HEIC to JPG..."
+    override val engineErrHeicUnsupported = "HEIC conversion requires Android 9 or newer."
+    override fun engineErrHeicDecode(msg: String) = "Failed to read the HEIC file: $msg"
+    override val toolHeicTitle = "HEIC to JPG"
+    override val toolHeicDesc = "Convert HEIC or HEIF camera photos to JPG."
+    override val toolErrNotHeic = "The selected file is not HEIC or HEIF."
+    override val toolInfoTitle = "File Info"
+    override val toolInfoDesc = "See the format, duration, resolution, codec, and bitrate of a media file."
+    override val infoFormatLabel = "Format"
+    override val infoDurationLabel = "Duration"
+    override val infoSizeLabel = "Size"
+    override val infoResolutionLabel = "Resolution"
+    override val infoVideoCodecLabel = "Video codec"
+    override val infoAudioCodecLabel = "Audio codec"
+    override val infoBitrateLabel = "Bitrate"
+    override val infoLoading = "Reading file info..."
+    override val infoFailed = "Could not read info for this file."
+    override val engineNormalizingVolume = "Normalizing volume..."
+    override val toolNormalizeTitle = "Normalize Volume"
+    override val toolNormalizeDesc = "Even out a video or audio loudness with one-pass loudnorm."
+    override val toolErrNotMedia = "The selected file is not a video or audio file."
 
     override val validatorFileNotFound = "Output file not found in storage."
     override val validatorNotRegularFile = "Output path is not a regular file."

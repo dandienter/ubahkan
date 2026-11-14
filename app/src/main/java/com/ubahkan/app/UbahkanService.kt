@@ -131,17 +131,6 @@ class UbahkanService : Service() {
                     }
 
                     val finalPaths: List<String> = when {
-                        allUris.size > 1 && job.targetFormat.equals("pdf", ignoreCase = true) -> {
-                            listOf(
-                                UbahkanEngine.mergeImagesToPdf(
-                                    context = this@UbahkanService,
-                                    inputUris = allUris,
-                                    originalFileName = job.originalFileName,
-                                    qualityPreset = job.qualityPreset,
-                                    onProgress = progressCallback
-                                )
-                            )
-                        }
                         job.operation != ToolOperation.CONVERT -> {
                             UbahkanEngine.executeToolOperation(
                                 context = this@UbahkanService,
@@ -152,7 +141,25 @@ class UbahkanService : Service() {
                                 trimStartSec = job.trimStartSec,
                                 trimEndSec = job.trimEndSec,
                                 splitSeconds = job.splitSeconds,
+                                pdfPageRange = job.pdfPageRange,
+                                cropRatio = job.cropRatio,
+                                resizeHeight = job.resizeHeight,
+                                extraInputUris = job.extraInputUris,
+                                extraFileNames = job.extraInputUris.map { extraUri ->
+                                    getFileNameFromUri(this@UbahkanService, extraUri)
+                                },
                                 onProgress = progressCallback
+                            )
+                        }
+                        allUris.size > 1 && job.targetFormat.equals("pdf", ignoreCase = true) -> {
+                            listOf(
+                                UbahkanEngine.mergeImagesToPdf(
+                                    context = this@UbahkanService,
+                                    inputUris = allUris,
+                                    originalFileName = job.originalFileName,
+                                    qualityPreset = job.qualityPreset,
+                                    onProgress = progressCallback
+                                )
                             )
                         }
                         else -> {

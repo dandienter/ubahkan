@@ -48,7 +48,9 @@ import com.ubahkan.app.ui.screens.HomeScreen
 import com.ubahkan.app.ui.screens.ProgressScreen
 import com.ubahkan.app.ui.screens.SettingsScreen
 import com.ubahkan.app.ui.screens.SplashScreen
+import com.ubahkan.app.ui.screens.FileInfoSheet
 import com.ubahkan.app.ui.screens.ToolActionSheet
+import com.ubahkan.app.ui.screens.ToolActionSheet2
 import com.ubahkan.app.ui.screens.ToolsScreen
 import com.ubahkan.app.ui.screens.WelcomeScreen
 import com.ubahkan.app.ui.theme.UbahkanTheme
@@ -435,24 +437,42 @@ class MainActivity : ComponentActivity() {
                                             onBackClick = { currentTab = UbahkanTab.Home }
                                         )
 
-                                        // Sheet konfigurasi alat Batch 1 untuk file terpilih
+                                        // Sheet konfigurasi alat untuk file terpilih:
+                                        // Batch 1 memakai ToolActionSheet, Batch 2 memakai ToolActionSheet2
                                         val toolOperation = pendingToolOperation
                                         if (showToolSheet && toolOperation != null && selectedFilesForConversion.isNotEmpty()) {
-                                            ToolActionSheet(
-                                                file = selectedFilesForConversion.first(),
-                                                operation = toolOperation,
-                                                onDismiss = {
-                                                    showToolSheet = false
-                                                    pendingToolOperation = null
-                                                    selectedFilesForConversion = emptyList()
-                                                },
-                                                onStarted = {
-                                                    showToolSheet = false
-                                                    pendingToolOperation = null
-                                                    selectedFilesForConversion = emptyList()
-                                                    showProgressScreen = true
-                                                }
-                                            )
+                                            val dismissToolSheet = {
+                                                showToolSheet = false
+                                                pendingToolOperation = null
+                                                selectedFilesForConversion = emptyList()
+                                            }
+                                            val toolStarted = {
+                                                showToolSheet = false
+                                                pendingToolOperation = null
+                                                selectedFilesForConversion = emptyList()
+                                                showProgressScreen = true
+                                            }
+                                            when (toolOperation) {
+                                                ToolOperation.FILE_INFO -> FileInfoSheet(
+                                                    file = selectedFilesForConversion.first(),
+                                                    onDismiss = dismissToolSheet
+                                                )
+                                                ToolOperation.COMPRESS_VIDEO,
+                                                ToolOperation.COMPRESS_IMAGE,
+                                                ToolOperation.TRIM_VIDEO,
+                                                ToolOperation.AUTO_SPLIT -> ToolActionSheet(
+                                                    file = selectedFilesForConversion.first(),
+                                                    operation = toolOperation,
+                                                    onDismiss = dismissToolSheet,
+                                                    onStarted = toolStarted
+                                                )
+                                                else -> ToolActionSheet2(
+                                                    files = selectedFilesForConversion,
+                                                    operation = toolOperation,
+                                                    onDismiss = dismissToolSheet,
+                                                    onStarted = toolStarted
+                                                )
+                                            }
                                         }
                                     }
 

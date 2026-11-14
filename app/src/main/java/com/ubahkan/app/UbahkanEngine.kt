@@ -968,6 +968,11 @@ object UbahkanEngine {
         trimStartSec: Double = 0.0,
         trimEndSec: Double = 0.0,
         splitSeconds: Int = 0,
+        pdfPageRange: String = "",
+        cropRatio: String = "",
+        resizeHeight: Int = 0,
+        extraInputUris: List<Uri> = emptyList(),
+        extraFileNames: List<String> = emptyList(),
         onProgress: (String, Int) -> Unit
     ): List<String> = withContext(Dispatchers.IO) {
         activeJob = coroutineContext[Job]
@@ -984,6 +989,39 @@ object UbahkanEngine {
                 )
                 ToolOperation.AUTO_SPLIT -> splitVideoAuto(
                     context, inputUri, originalFileName, splitSeconds, onProgress
+                )
+                ToolOperation.MERGE_VIDEO -> mergeVideos(
+                    context, inputUri, originalFileName, extraInputUris, extraFileNames, onProgress
+                )
+                ToolOperation.SPLIT_PDF -> splitPdf(
+                    context, inputUri, originalFileName, pdfPageRange, onProgress
+                )
+                ToolOperation.MERGE_PDF -> mergePdfs(
+                    context, inputUri, originalFileName, extraInputUris, onProgress
+                )
+                ToolOperation.HARDSUB -> burnSubtitles(
+                    context, inputUri, originalFileName, extraInputUris, extraFileNames, onProgress
+                )
+                ToolOperation.CROP_VIDEO -> cropVideo(
+                    context, inputUri, originalFileName, cropRatio, onProgress
+                )
+                ToolOperation.RESIZE_VIDEO -> resizeVideo(
+                    context, inputUri, originalFileName, resizeHeight, onProgress
+                )
+                ToolOperation.MUTE_VIDEO -> muteVideo(
+                    context, inputUri, originalFileName, onProgress
+                )
+                ToolOperation.REPLACE_AUDIO -> replaceVideoAudio(
+                    context, inputUri, originalFileName, extraInputUris, extraFileNames, onProgress
+                )
+                ToolOperation.HEIC_TO_JPG -> convertHeicToJpg(
+                    context, inputUri, originalFileName, onProgress
+                )
+                ToolOperation.FILE_INFO -> throw IllegalArgumentException(
+                    "Operasi FILE_INFO hanya untuk tampilan info, bukan antrean"
+                )
+                ToolOperation.NORMALIZE_VOLUME -> normalizeVolume(
+                    context, inputUri, originalFileName, onProgress
                 )
                 ToolOperation.CONVERT -> throw IllegalArgumentException(
                     "Operasi CONVERT harus lewat executeConversion"
@@ -1356,6 +1394,759 @@ object UbahkanEngine {
             OutputManager.cleanTempFiles(tempInput)
             splitDir.deleteRecursively()
             throw e
+        }
+    }
+
+    // --- 9a. GABUNG VIDEO (CONCAT DEMUXER, STREAM COPY) ---
+    // Semua masukan disalin ke temp, daftar concat ditulis, lalu digabung tanpa encode ulang.
+    // Stream copy menuntut codec/resolusi masukan sama; bila beda, FFmpeg bisa gagal
+    // dan job ditandai gagal oleh pemanggil.
+    private suspend fun mergeVideos(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        extraInputUris: List<Uri>,
+        extraFileNames: List<String>,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val allUris = listOf(inputUri) + extraInputUris
+        val allNames = listOf(originalFileName) + extraFileNames
+        val tempInputs = mutableListOf<File>()
+        var listFile: File? = null
+        val tempOutput = OutputManager.createTempFile(context, "mergev_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineMergingVideos, 5, onProgress)
+
+            var totalDurationMs = 0L
+            for ((index, uri) in allUris.withIndex()) {
+                currentCoroutineContext().ensureActive()
+                val name = allNames.getOrNull(index) ?: ""
+                val ext = name.substringAfterLast('.', "").trim().lowercase()
+                    .ifEmpty { inputExt }
+                val tempInput = copyInputToTempFile(context, uri, "mergev_in_$index", ext)
+                tempInputs.add(tempInput)
+                totalDurationMs += (probeDurationSeconds(tempInput) * 1000).toLong()
+            }
+
+            // Berkas daftar concat: satu baris "file '<path>'" per masukan, urut sesuai pilihan
+            val listContent = buildString {
+                for (tempInput in tempInputs) {
+                    val escapedPath = tempInput.absolutePath.replace("'", "'\\''")
+                    append("file '").append(escapedPath).append("'\n")
+                }
+            }
+            listFile = OutputManager.createTempFile(context, "mergev_list", "txt")
+            listFile.writeText(listContent)
+
+            val command = "-y -f concat -safe 0 -i \"${listFile.absolutePath}\"" +
+                " -c copy \"${tempOutput.absolutePath}\""
+            val returnCode = runFfmpegCommand(command, totalDurationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(*tempInputs.toTypedArray(), listFile)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(*tempInputs.toTypedArray(), listFile, tempOutput)
+            throw e
+        }
+    }
+
+    // Parse rentang halaman "1-3", "1,3,5", atau campuran, berbasis 1.
+    // String kosong berarti semua halaman. Null bila ada token yang tidak valid.
+    private fun parsePdfPageRange(spec: String, pageCount: Int): List<Int>? {
+        val trimmed = spec.trim()
+        if (trimmed.isEmpty() || trimmed.equals("all", ignoreCase = true)) {
+            return (1..pageCount).toList()
+        }
+        val result = mutableListOf<Int>()
+        for (token in trimmed.split(',')) {
+            val part = token.trim()
+            if (part.isEmpty()) return null
+            if (part.contains('-')) {
+                val bounds = part.split('-')
+                if (bounds.size != 2) return null
+                val from = bounds[0].trim().toIntOrNull() ?: return null
+                val to = bounds[1].trim().toIntOrNull() ?: return null
+                if (from < 1 || to > pageCount || from > to) return null
+                for (page in from..to) result.add(page)
+            } else {
+                val page = part.toIntOrNull() ?: return null
+                if (page < 1 || page > pageCount) return null
+                result.add(page)
+            }
+        }
+        return result.distinct()
+    }
+
+    // --- 9b. PISAH PDF (SATU PDF PER HALAMAN, BERBASIS BITMAP 200 DPI) ---
+    // Tanpa pustaka PDF tambahan: tiap halaman dirender PdfRenderer pada 200 DPI
+    // lalu ditulis sebagai halaman PdfDocument. Hasilnya gambar (teks tidak lagi
+    // bisa diseleksi), sama seperti jalur kompres PDF yang sudah ada.
+    private suspend fun splitPdf(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        pageRange: String,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val tempInput = copyInputToTempFile(context, inputUri, "splitpdf_in", "pdf")
+        val createdTempFiles = mutableListOf<File>()
+
+        try {
+            updateProgress("pdf", strings.engineSplittingPdf, 5, onProgress)
+
+            val pfd = ParcelFileDescriptor.open(tempInput, ParcelFileDescriptor.MODE_READ_ONLY)
+            val renderer = PdfRenderer(pfd)
+            val pageCount = renderer.pageCount
+            if (pageCount == 0) {
+                renderer.close()
+                pfd.close()
+                throw IllegalStateException(strings.engineErrPdfNoPages)
+            }
+
+            val pages = parsePdfPageRange(pageRange, pageCount)
+                ?: throw IOException(strings.engineErrPdfRangeInvalid)
+
+            // Ukuran titik PdfRenderer berbasis 72 DPI, skala ke 200 DPI
+            val scale = 200f / 72f
+            val baseName = originalFileName.substringBeforeLast('.', "doc")
+            val finalPaths = mutableListOf<String>()
+
+            for ((index, pageNumber) in pages.withIndex()) {
+                currentCoroutineContext().ensureActive()
+                val percent = (((index + 1).toFloat() / pages.size) * 88).toInt() + 6
+                updateProgress(
+                    "pdf",
+                    strings.engineSplittingPdfPage(index + 1, pages.size),
+                    percent,
+                    onProgress
+                )
+
+                val page = renderer.openPage(pageNumber - 1)
+                val width = (page.width * scale).toInt().coerceAtLeast(1)
+                val height = (page.height * scale).toInt().coerceAtLeast(1)
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                canvas.drawColor(Color.WHITE)
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                page.close()
+
+                val pdfDocument = PdfDocument()
+                val pageInfo = PdfDocument.PageInfo.Builder(width, height, 1).create()
+                val docPage = pdfDocument.startPage(pageInfo)
+                docPage.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                pdfDocument.finishPage(docPage)
+                bitmap.recycle()
+
+                val tempPageFile = OutputManager.createTempFile(context, "splitpdf_page", "pdf")
+                createdTempFiles.add(tempPageFile)
+                FileOutputStream(tempPageFile).use { fos -> pdfDocument.writeTo(fos) }
+                pdfDocument.close()
+
+                val savedPath = OutputManager.finalizeOutput(
+                    context, tempPageFile, "${baseName}_hal_$pageNumber.pdf", "pdf"
+                )
+                if (savedPath != null) finalPaths.add(savedPath)
+            }
+
+            renderer.close()
+            pfd.close()
+
+            if (finalPaths.isEmpty()) {
+                throw IOException(strings.engineErrSaveOutput)
+            }
+
+            OutputManager.cleanTempFiles(tempInput, *createdTempFiles.toTypedArray())
+            withContext(Dispatchers.Main) {
+                currentStatus.value = ConvertState.Success
+                onProgress(strings.engineFinished100, 100)
+            }
+            return finalPaths
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, *createdTempFiles.toTypedArray())
+            throw e
+        }
+    }
+
+    // --- 9c. GABUNG PDF (BEBERAPA PDF JADI SATU, BERBASIS BITMAP 200 DPI) ---
+    // Cara yang sama seperti pisah PDF: semua halaman dirender lalu ditulis ulang
+    // ke satu PdfDocument, mengikuti urutan berkas yang dipilih pengguna.
+    private suspend fun mergePdfs(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        extraInputUris: List<Uri>,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val allUris = listOf(inputUri) + extraInputUris
+        val tempInputs = mutableListOf<File>()
+        val tempOutput = OutputManager.createTempFile(context, "mergepdf_out", "pdf")
+
+        try {
+            updateProgress("pdf", strings.engineMergingPdfs, 5, onProgress)
+
+            for ((index, uri) in allUris.withIndex()) {
+                currentCoroutineContext().ensureActive()
+                tempInputs.add(copyInputToTempFile(context, uri, "mergepdf_in_$index", "pdf"))
+            }
+
+            // Hitung total halaman dulu agar progres akurat
+            var totalPages = 0
+            for (tempInput in tempInputs) {
+                val pfd = ParcelFileDescriptor.open(tempInput, ParcelFileDescriptor.MODE_READ_ONLY)
+                val renderer = PdfRenderer(pfd)
+                totalPages += renderer.pageCount
+                renderer.close()
+                pfd.close()
+            }
+            if (totalPages == 0) {
+                throw IllegalStateException(strings.engineErrPdfNoPages)
+            }
+
+            val scale = 200f / 72f
+            val pdfDocument = PdfDocument()
+            var outputPage = 0
+            try {
+                for (tempInput in tempInputs) {
+                    val pfd = ParcelFileDescriptor.open(tempInput, ParcelFileDescriptor.MODE_READ_ONLY)
+                    val renderer = PdfRenderer(pfd)
+                    for (i in 0 until renderer.pageCount) {
+                        currentCoroutineContext().ensureActive()
+                        outputPage++
+                        val percent = ((outputPage.toFloat() / totalPages) * 88).toInt() + 6
+                        updateProgress(
+                            "pdf",
+                            strings.engineMergingPdfPage(outputPage, totalPages),
+                            percent,
+                            onProgress
+                        )
+
+                        val page = renderer.openPage(i)
+                        val width = (page.width * scale).toInt().coerceAtLeast(1)
+                        val height = (page.height * scale).toInt().coerceAtLeast(1)
+                        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                        val canvas = Canvas(bitmap)
+                        canvas.drawColor(Color.WHITE)
+                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
+                        page.close()
+
+                        val pageInfo = PdfDocument.PageInfo.Builder(width, height, outputPage).create()
+                        val docPage = pdfDocument.startPage(pageInfo)
+                        docPage.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                        pdfDocument.finishPage(docPage)
+                        bitmap.recycle()
+                    }
+                    renderer.close()
+                    pfd.close()
+                }
+
+                FileOutputStream(tempOutput).use { fos -> pdfDocument.writeTo(fos) }
+            } finally {
+                pdfDocument.close()
+            }
+
+            val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, "pdf")
+                ?: throw IOException(strings.engineErrSaveOutput)
+            OutputManager.cleanTempFiles(*tempInputs.toTypedArray())
+            withContext(Dispatchers.Main) {
+                currentStatus.value = ConvertState.Success
+                onProgress(strings.engineFinished100, 100)
+            }
+            return listOf(finalPath)
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(*tempInputs.toTypedArray(), tempOutput)
+            throw e
+        }
+    }
+
+    // Escape path untuk filter subtitles: karakter khusus opsi filter harus diloloskan
+    private fun escapeSubtitlesFilterPath(path: String): String {
+        return path
+            .replace("\\", "\\\\")
+            .replace(":", "\\:")
+            .replace("'", "\\'")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
+            .replace(",", "\\,")
+            .replace(";", "\\;")
+    }
+
+    // --- 9d. BAKAR SUBTITLE (HARDSUB) ---
+    // Filter subtitles (libass) menggambar teks .srt langsung ke frame video,
+    // video di-encode ulang libx264, audio disalin apa adanya.
+    private suspend fun burnSubtitles(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        extraInputUris: List<Uri>,
+        extraFileNames: List<String>,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val subtitleUri = extraInputUris.firstOrNull()
+            ?: throw IOException(strings.engineErrSubtitleMissing)
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val subtitleName = extraFileNames.firstOrNull() ?: ""
+        val subtitleExt = subtitleName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "srt" }
+
+        val tempInput = copyInputToTempFile(context, inputUri, "hardsub_in", inputExt)
+        var tempSubtitle: File? = null
+        val tempOutput = OutputManager.createTempFile(context, "hardsub_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineBurningSubtitles, 5, onProgress)
+            tempSubtitle = copyInputToTempFile(context, subtitleUri, "hardsub_srt", subtitleExt)
+
+            val durationMs = (probeDurationSeconds(tempInput) * 1000).toLong()
+            val escapedPath = escapeSubtitlesFilterPath(tempSubtitle.absolutePath)
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -vf \"subtitles='$escapedPath'\"" +
+                " -c:v libx264 -c:a copy \"${tempOutput.absolutePath}\""
+            val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput, tempSubtitle)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempSubtitle, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9e. CROP RASIO VIDEO ---
+    // Filter crop terpusat: lebar/tinggi dibatasi min() terhadap rasio tujuan dan
+    // dibulatkan ke genap (trunc ke kelipatan 2) agar libx264 tidak gagal.
+    private suspend fun cropVideo(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        cropRatio: String,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val tempInput = copyInputToTempFile(context, inputUri, "crop_in", inputExt)
+        val tempOutput = OutputManager.createTempFile(context, "crop_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineCroppingVideo, 5, onProgress)
+
+            val (widthExpr, heightExpr) = when (cropRatio) {
+                "9:16" -> "trunc(min(iw,ih*9/16)/2)*2" to "trunc(min(ih,iw*16/9)/2)*2"
+                "1:1" -> "trunc(min(iw,ih)/2)*2" to "trunc(min(iw,ih)/2)*2"
+                else -> "trunc(min(iw,ih*16/9)/2)*2" to "trunc(min(ih,iw*9/16)/2)*2"
+            }
+            val cropFilter = "crop='$widthExpr':'$heightExpr':'(iw-ow)/2':'(ih-oh)/2'"
+            val fastStartArg = if (outExt in listOf("mp4", "mov")) " -movflags +faststart" else ""
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -vf \"$cropFilter\" -c:v libx264 -c:a aac$fastStartArg" +
+                " \"${tempOutput.absolutePath}\""
+
+            val durationMs = (probeDurationSeconds(tempInput) * 1000).toLong()
+            val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9f. UBAH RESOLUSI VIDEO ---
+    // scale=-2:'min(ih,H)': tinggi hanya diturunkan ke preset; bila sumber lebih
+    // kecil dari preset, min() mempertahankan ukuran aslinya.
+    private suspend fun resizeVideo(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        targetHeight: Int,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val height = if (targetHeight in listOf(1080, 720, 480, 360)) targetHeight else 720
+        val tempInput = copyInputToTempFile(context, inputUri, "resize_in", inputExt)
+        val tempOutput = OutputManager.createTempFile(context, "resize_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineResizingVideo, 5, onProgress)
+
+            val fastStartArg = if (outExt in listOf("mp4", "mov")) " -movflags +faststart" else ""
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -vf \"scale=-2:'min(ih,$height)'\" -c:v libx264 -c:a aac$fastStartArg" +
+                " \"${tempOutput.absolutePath}\""
+
+            val durationMs = (probeDurationSeconds(tempInput) * 1000).toLong()
+            val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9g. BISUKAN VIDEO ---
+    // Video disalin tanpa encode ulang, jalur audio dibuang dengan -an.
+    private suspend fun muteVideo(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val tempInput = copyInputToTempFile(context, inputUri, "mute_in", inputExt)
+        val tempOutput = OutputManager.createTempFile(context, "mute_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineMutingVideo, 5, onProgress)
+
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -c:v copy -an \"${tempOutput.absolutePath}\""
+            val durationMs = (probeDurationSeconds(tempInput) * 1000).toLong()
+            val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9h. GANTI AUDIO VIDEO ---
+    // Video dari masukan pertama disalin, audio diambil dari berkas kedua,
+    // hasil dipotong mengikuti yang terpendek (-shortest).
+    private suspend fun replaceVideoAudio(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        extraInputUris: List<Uri>,
+        extraFileNames: List<String>,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val audioUri = extraInputUris.firstOrNull()
+            ?: throw IOException(strings.engineErrAudioMissing)
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val audioName = extraFileNames.firstOrNull() ?: ""
+        val audioExt = audioName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp3" }
+
+        val tempInput = copyInputToTempFile(context, inputUri, "repaud_in", inputExt)
+        var tempAudio: File? = null
+        val tempOutput = OutputManager.createTempFile(context, "repaud_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineReplacingAudio, 5, onProgress)
+            tempAudio = copyInputToTempFile(context, audioUri, "repaud_audio", audioExt)
+
+            val command = "-y -i \"${tempInput.absolutePath}\" -i \"${tempAudio.absolutePath}\"" +
+                " -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -shortest" +
+                " \"${tempOutput.absolutePath}\""
+            val durationMs = (probeDurationSeconds(tempInput) * 1000).toLong()
+            val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput, tempAudio)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempAudio, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9i. HEIC KE JPG ---
+    // ImageDecoder (API 28+) mendekode HEIC/HEIF secara native, hasil dikompres
+    // JPEG kualitas 92. Di bawah API 28 tidak ada decoder HEIF bawaan yang bisa
+    // diandalkan, jadi job gagal dengan pesan yang jelas.
+    private suspend fun convertHeicToJpg(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            throw IOException(strings.engineErrHeicUnsupported)
+        }
+        val tempOutput = OutputManager.createTempFile(context, "heic_out", "jpg")
+
+        try {
+            updateProgress("jpg", strings.engineConvertingHeic, 30, onProgress)
+
+            val bitmap = try {
+                val source = android.graphics.ImageDecoder.createSource(context.contentResolver, inputUri)
+                android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                    decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+                }
+            } catch (e: Exception) {
+                throw IOException(strings.engineErrHeicDecode(e.message ?: ""))
+            }
+
+            updateProgress("jpg", strings.engineCompressingImage, 70, onProgress)
+
+            val finalBitmap = if (bitmap.hasAlpha()) {
+                val opaqueBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(opaqueBitmap)
+                canvas.drawColor(Color.WHITE)
+                canvas.drawBitmap(bitmap, 0f, 0f, null)
+                bitmap.recycle()
+                opaqueBitmap
+            } else {
+                bitmap
+            }
+
+            FileOutputStream(tempOutput).use { fos ->
+                finalBitmap.compress(Bitmap.CompressFormat.JPEG, 92, fos)
+            }
+            finalBitmap.recycle()
+
+            val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, "jpg")
+                ?: throw IOException(strings.engineErrSaveOutput)
+            OutputManager.cleanTempFiles(tempOutput)
+            withContext(Dispatchers.Main) {
+                currentStatus.value = ConvertState.Success
+                onProgress(strings.engineFinished100, 100)
+            }
+            return listOf(finalPath)
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempOutput)
+            throw e
+        }
+    }
+
+    // --- 9j. NORMALISASI VOLUME (LOUDNORM SATU PASS) ---
+    // Video: gambar disalin, audio difilter loudnorm I=-16:TP=-1.5:LRA=11 lalu
+    // di-encode AAC. Audio saja: hanya jalur audio yang diproses ke format asal.
+    private suspend fun normalizeVolume(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val tempInput = copyInputToTempFile(context, inputUri, "loudnorm_in", inputExt)
+
+        try {
+            val mediaInfo = FFprobeKit.getMediaInformation(tempInput.absolutePath).mediaInformation
+            val hasVideo = mediaInfo?.streams?.any { it.type.equals("video", ignoreCase = true) } == true
+            val durationMs = (mediaInfo?.duration?.toDoubleOrNull()?.times(1000))?.toLong() ?: 0L
+
+            val loudnormFilter = "loudnorm=I=-16:TP=-1.5:LRA=11"
+            val outExt: String
+            val command: String
+            if (hasVideo) {
+                outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+                val tempOutput = OutputManager.createTempFile(context, "loudnorm_out", outExt)
+                try {
+                    updateProgress(outExt, strings.engineNormalizingVolume, 5, onProgress)
+                    command = "-y -i \"${tempInput.absolutePath}\"" +
+                        " -c:v copy -af \"$loudnormFilter\" -c:a aac \"${tempOutput.absolutePath}\""
+                    val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+                    return finishLoudnormJob(context, tempInput, tempOutput, originalFileName, outExt, returnCode, onProgress)
+                } catch (e: Exception) {
+                    OutputManager.cleanTempFiles(tempOutput)
+                    throw e
+                }
+            } else {
+                outExt = if (inputExt in listOf("mp3", "m4a", "aac", "wav", "flac", "ogg", "opus")) inputExt else "mp3"
+                val encoder = when (outExt) {
+                    "mp3" -> "libmp3lame"
+                    "wav" -> "pcm_s16le"
+                    "flac" -> "flac"
+                    "ogg" -> "libvorbis"
+                    "opus" -> "libopus"
+                    else -> "aac"
+                }
+                val tempOutput = OutputManager.createTempFile(context, "loudnorm_out", outExt)
+                try {
+                    updateProgress(outExt, strings.engineNormalizingVolume, 5, onProgress)
+                    command = "-y -i \"${tempInput.absolutePath}\"" +
+                        " -vn -af \"$loudnormFilter\" -c:a $encoder \"${tempOutput.absolutePath}\""
+                    val returnCode = runFfmpegCommand(command, durationMs, outExt, strings, onProgress)
+                    return finishLoudnormJob(context, tempInput, tempOutput, originalFileName, outExt, returnCode, onProgress)
+                } catch (e: Exception) {
+                    OutputManager.cleanTempFiles(tempOutput)
+                    throw e
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput)
+            throw e
+        }
+    }
+
+    // Penutup bersama jalur loudnorm video dan audio: validasi lalu finalisasi
+    private suspend fun finishLoudnormJob(
+        context: Context,
+        tempInput: File,
+        tempOutput: File,
+        originalFileName: String,
+        outExt: String,
+        returnCode: ReturnCode,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        if (ReturnCode.isCancel(returnCode)) {
+            throw CancellationException(strings.engineCancelled)
+        }
+        if (!ReturnCode.isSuccess(returnCode)) {
+            throw IOException(strings.engineErrFFmpeg(returnCode.value))
+        }
+
+        updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+        when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+            is ConversionValidator.ValidationResult.Invalid -> {
+                throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+            }
+            is ConversionValidator.ValidationResult.Valid -> {
+                val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                    ?: throw IOException(strings.engineErrSaveOutput)
+                OutputManager.cleanTempFiles(tempInput)
+                withContext(Dispatchers.Main) {
+                    currentStatus.value = ConvertState.Success
+                    onProgress(strings.engineFinished100, 100)
+                }
+                return listOf(finalPath)
+            }
         }
     }
 

@@ -13,7 +13,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CallSplit
 import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Crop
+import androidx.compose.material.icons.filled.MergeType
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.PhotoSizeSelectLarge
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
@@ -159,6 +170,17 @@ fun ToolActionSheet(
         ToolOperation.COMPRESS_IMAGE -> strings.toolCompressImageTitle
         ToolOperation.TRIM_VIDEO -> strings.toolTrimTitle
         ToolOperation.AUTO_SPLIT -> strings.toolSplitTitle
+        ToolOperation.MERGE_VIDEO -> strings.toolMergeVideoTitle
+        ToolOperation.SPLIT_PDF -> strings.toolSplitPdfTitle
+        ToolOperation.MERGE_PDF -> strings.toolMergePdfTitle
+        ToolOperation.HARDSUB -> strings.toolHardsubTitle
+        ToolOperation.CROP_VIDEO -> strings.toolCropTitle
+        ToolOperation.RESIZE_VIDEO -> strings.toolResizeTitle
+        ToolOperation.MUTE_VIDEO -> strings.toolMuteTitle
+        ToolOperation.REPLACE_AUDIO -> strings.toolReplaceAudioTitle
+        ToolOperation.HEIC_TO_JPG -> strings.toolHeicTitle
+        ToolOperation.FILE_INFO -> strings.toolInfoTitle
+        ToolOperation.NORMALIZE_VOLUME -> strings.toolNormalizeTitle
         ToolOperation.CONVERT -> strings.bottomSheetTitle
     }
     val icon: ImageVector = when (operation) {
@@ -166,6 +188,17 @@ fun ToolActionSheet(
         ToolOperation.COMPRESS_IMAGE -> Icons.Default.PhotoSizeSelectLarge
         ToolOperation.TRIM_VIDEO -> Icons.Default.ContentCut
         ToolOperation.AUTO_SPLIT -> Icons.Default.CallSplit
+        ToolOperation.MERGE_VIDEO -> Icons.Default.MergeType
+        ToolOperation.SPLIT_PDF -> Icons.Default.ContentCopy
+        ToolOperation.MERGE_PDF -> Icons.Default.PictureAsPdf
+        ToolOperation.HARDSUB -> Icons.Default.Subtitles
+        ToolOperation.CROP_VIDEO -> Icons.Default.Crop
+        ToolOperation.RESIZE_VIDEO -> Icons.Default.AspectRatio
+        ToolOperation.MUTE_VIDEO -> Icons.Default.VolumeOff
+        ToolOperation.REPLACE_AUDIO -> Icons.Default.Audiotrack
+        ToolOperation.HEIC_TO_JPG -> Icons.Default.Image
+        ToolOperation.FILE_INFO -> Icons.Default.Info
+        ToolOperation.NORMALIZE_VOLUME -> Icons.Default.GraphicEq
         ToolOperation.CONVERT -> Icons.Default.SwapHoriz
     }
 
@@ -191,8 +224,26 @@ fun ToolActionSheet(
 
     val guardError = when (operation) {
         ToolOperation.COMPRESS_IMAGE -> if (!isImage) strings.toolErrNotImage else null
-        ToolOperation.COMPRESS_VIDEO, ToolOperation.TRIM_VIDEO, ToolOperation.AUTO_SPLIT ->
+        ToolOperation.COMPRESS_VIDEO, ToolOperation.TRIM_VIDEO, ToolOperation.AUTO_SPLIT,
+        ToolOperation.MERGE_VIDEO ->
             if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.SPLIT_PDF ->
+            if (category != FileCategory.PDF) strings.toolErrNotPdf else null
+        ToolOperation.MERGE_PDF ->
+            if (category != FileCategory.PDF) strings.toolErrNotPdf else null
+        ToolOperation.HARDSUB ->
+            if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.CROP_VIDEO ->
+            if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.RESIZE_VIDEO ->
+            if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.MUTE_VIDEO ->
+            if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.REPLACE_AUDIO ->
+            if (!isVideo) strings.toolErrNotVideo else null
+        ToolOperation.HEIC_TO_JPG -> null
+        ToolOperation.FILE_INFO -> null
+        ToolOperation.NORMALIZE_VOLUME -> null
         ToolOperation.CONVERT -> null
     }
     val canStart = guardError == null

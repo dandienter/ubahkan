@@ -20,13 +20,24 @@ enum class JobStatus {
     CANCELLED
 }
 
-// Jenis operasi sebuah job: konversi biasa atau alat khusus (Batch 1)
+// Jenis operasi sebuah job: konversi biasa atau alat khusus (Batch 1 dan 2)
 enum class ToolOperation {
     CONVERT,
     COMPRESS_VIDEO,
     COMPRESS_IMAGE,
     TRIM_VIDEO,
-    AUTO_SPLIT
+    AUTO_SPLIT,
+    MERGE_VIDEO,
+    SPLIT_PDF,
+    MERGE_PDF,
+    HARDSUB,
+    CROP_VIDEO,
+    RESIZE_VIDEO,
+    MUTE_VIDEO,
+    REPLACE_AUDIO,
+    HEIC_TO_JPG,
+    FILE_INFO,
+    NORMALIZE_VOLUME
 }
 
 data class ConversionJob(
@@ -47,6 +58,9 @@ data class ConversionJob(
     val trimStartSec: Double = 0.0,
     val trimEndSec: Double = 0.0,
     val splitSeconds: Int = 0,
+    val pdfPageRange: String = "",
+    val cropRatio: String = "",
+    val resizeHeight: Int = 0,
     val outputFilePaths: List<String> = emptyList()
 )
 
@@ -61,7 +75,10 @@ data class ConversionJobRequest(
     val targetSizeBytes: Long = 0L,
     val trimStartSec: Double = 0.0,
     val trimEndSec: Double = 0.0,
-    val splitSeconds: Int = 0
+    val splitSeconds: Int = 0,
+    val pdfPageRange: String = "",
+    val cropRatio: String = "",
+    val resizeHeight: Int = 0
 )
 
 data class SelectedFileItem(
@@ -101,7 +118,10 @@ object ConversionQueueManager {
         targetSizeBytes: Long = 0L,
         trimStartSec: Double = 0.0,
         trimEndSec: Double = 0.0,
-        splitSeconds: Int = 0
+        splitSeconds: Int = 0,
+        pdfPageRange: String = "",
+        cropRatio: String = "",
+        resizeHeight: Int = 0
     ): String {
         // Bersihkan riwayat antrean sesi sebelumnya jika antrean sedang menganggur
         if (!hasActiveOrWaitingJobs()) {
@@ -119,7 +139,10 @@ object ConversionQueueManager {
             targetSizeBytes = targetSizeBytes,
             trimStartSec = trimStartSec,
             trimEndSec = trimEndSec,
-            splitSeconds = splitSeconds
+            splitSeconds = splitSeconds,
+            pdfPageRange = pdfPageRange,
+            cropRatio = cropRatio,
+            resizeHeight = resizeHeight
         )
         _queueState.update { currentList -> currentList + newJob }
         return newJob.id
@@ -143,7 +166,10 @@ object ConversionQueueManager {
                 targetSizeBytes = req.targetSizeBytes,
                 trimStartSec = req.trimStartSec,
                 trimEndSec = req.trimEndSec,
-                splitSeconds = req.splitSeconds
+                splitSeconds = req.splitSeconds,
+                pdfPageRange = req.pdfPageRange,
+                cropRatio = req.cropRatio,
+                resizeHeight = req.resizeHeight
             )
         }
         _queueState.update { currentList -> currentList + newJobs }
