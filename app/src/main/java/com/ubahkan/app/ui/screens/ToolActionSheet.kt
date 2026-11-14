@@ -308,6 +308,11 @@ fun ToolActionSheet(
                 onStarted()
             }
             ToolOperation.CONVERT -> Unit
+            // Operasi Batch 2 ditangani ToolActionSheet2 dan FileInfoSheet, bukan sheet ini
+            ToolOperation.MERGE_VIDEO, ToolOperation.SPLIT_PDF, ToolOperation.MERGE_PDF,
+            ToolOperation.HARDSUB, ToolOperation.CROP_VIDEO, ToolOperation.RESIZE_VIDEO,
+            ToolOperation.MUTE_VIDEO, ToolOperation.REPLACE_AUDIO, ToolOperation.HEIC_TO_JPG,
+            ToolOperation.FILE_INFO, ToolOperation.NORMALIZE_VOLUME -> Unit
         }
     }
 
@@ -491,6 +496,11 @@ fun ToolActionSheet(
                 }
 
                 ToolOperation.CONVERT -> Unit
+                // Operasi Batch 2 ditangani ToolActionSheet2 dan FileInfoSheet, bukan sheet ini
+                ToolOperation.MERGE_VIDEO, ToolOperation.SPLIT_PDF, ToolOperation.MERGE_PDF,
+                ToolOperation.HARDSUB, ToolOperation.CROP_VIDEO, ToolOperation.RESIZE_VIDEO,
+                ToolOperation.MUTE_VIDEO, ToolOperation.REPLACE_AUDIO, ToolOperation.HEIC_TO_JPG,
+                ToolOperation.FILE_INFO, ToolOperation.NORMALIZE_VOLUME -> Unit
             }
 
             if (guardError != null) {
