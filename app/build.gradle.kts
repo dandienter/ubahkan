@@ -56,7 +56,15 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Rilis resmi sejak 1.4.0: ditandatangani keystore tetap lewat
+            // local.properties di CI, minify + shrink resources aktif sama
+            // seperti debug agar artefak rilis ikut ramping.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
