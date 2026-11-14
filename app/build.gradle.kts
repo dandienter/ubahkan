@@ -93,6 +93,9 @@ android {
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.activity:activity-compose:1.13.0")
+    // Lint InvalidFragmentVersionForActivityResult (fatal sejak activity
+    // 1.13 masuk lewat CameraX): classpath wajib memuat Fragment >= 1.3.0.
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
