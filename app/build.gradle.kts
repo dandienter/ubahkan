@@ -29,10 +29,15 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(localProps.getProperty("RELEASE_STORE_FILE") ?: "")
-            storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD") ?: ""
-            keyAlias = localProps.getProperty("RELEASE_KEY_ALIAS") ?: ""
-            keyPassword = localProps.getProperty("RELEASE_KEY_PASSWORD") ?: ""
+            // Hanya diisi bila local.properties menyediakan keystore rilis.
+            // Di CI berkas itu tidak ada, dan file("") membuat konfigurasi gagal.
+            val storePath = localProps.getProperty("RELEASE_STORE_FILE")
+            if (!storePath.isNullOrBlank()) {
+                storeFile = file(storePath)
+                storePassword = localProps.getProperty("RELEASE_STORE_PASSWORD") ?: ""
+                keyAlias = localProps.getProperty("RELEASE_KEY_ALIAS") ?: ""
+                keyPassword = localProps.getProperty("RELEASE_KEY_PASSWORD") ?: ""
+            }
         }
     }
 
