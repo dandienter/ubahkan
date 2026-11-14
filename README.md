@@ -24,28 +24,51 @@ Aplikasi konverter umumnya bekerja dengan mengunggah berkasmu ke server orang la
 - Tidak ada antre server, tidak ada batas ukuran dari pihak ketiga
 - Tidak perlu daftar, tidak ada iklan pelacak
 
-## Yang bisa dilakukan sekarang
+## Fitur
 
-**Video**  -  ubah format (MP4, MKV, MOV, WEBM, AVI, GIF), ambil audionya saja, mode Instan untuk pindah wadah tanpa mengubah kualitas.
+**Video**
+- Ubah format: MP4, MKV, MOV, WEBM, AVI, GIF
+- Mode Instan: pindah wadah tanpa mengubah kualitas
+- Ekstrak audio dari video
+- Kompres ke target ukuran (mis. di bawah 10 MB buat WhatsApp)
+- Potong (trim) dan potong otomatis per 30 detik / 1 menit / 1,5 menit, siap bagikan ke Status WhatsApp
+- Gabung banyak video jadi satu
+- Crop rasio 9:16 / 1:1 / 16:9 dan ubah resolusi
+- Bisukan video atau ganti audionya
+- Bakar subtitle (hardsub) langsung ke video
+- Ambil frame video sebagai gambar
 
-**Audio**  -  ubah format (MP3, WAV, FLAC, AAC, M4A, OGG, OPUS) dengan pilihan kualitas.
+**Audio**
+- Ubah format: MP3, WAV, FLAC, AAC, M4A, OGG, OPUS
+- Pilihan kualitas Rendah / Sedang / Tinggi / Instan
+- Normalisasi volume (loudnorm)
 
-**Gambar**  -  ubah format gambar, jadikan PDF, dan sebaliknya: halaman PDF jadi gambar, perkecil ukuran PDF, SVG jadi PNG/JPG/WEBP.
+**Gambar**
+- Ubah format gambar, termasuk HEIC ke JPG
+- Kompres ke target ukuran KB (pas buat berkas lamaran dan ujian)
+- Gambar jadi PDF
 
-**Dokumen**  -  EPUB jadi TXT, gambar dan PDF saling tukar.
+**PDF dan dokumen**
+- PDF jadi gambar, kompres PDF, gabung PDF, pisah PDF
+- SVG jadi PNG / JPG / WEBP
+- EPUB jadi TXT
 
-**Cara kerja sehari-hari**  -  banyak berkas diproses sekaligus (dikelompokkan otomatis per format asal), berkas bisa dikirim langsung dari aplikasi lain lewat menu Bagikan, proses jalan di latar belakang dengan notifikasi progres, dan semua hasil rapi di satu folder: `Downloads/Ubahkan`.
+**Pindai Dokumen**
+- Kamera dengan deteksi tepi kertas otomatis
+- Luruskan perspektif, banyak halaman jadi satu PDF
+- Filter dokumen lengkap: hitam-putih kontras tinggi, kertas putih, hilang bayangan, abu-abu, dan lainnya
+- OCR: tulisan hasil pindai jadi teks yang bisa disalin
+- Tempel tanda tangan ke PDF
 
-## Sedang dibangun
-
-Peta jalan rilis berikutnya, dikerjakan terbuka di repo ini:
-
-- Kompres ke target ukuran (mis. video di bawah 10 MB, foto di bawah 200 KB)
-- Potong otomatis: video panjang dibagi per 30 detik / 1 menit / 1,5 menit, siap bagikan ke Status WhatsApp
-- Potong (trim), gabung video, gabung dan pisah PDF, bakar subtitle ke video
-- Crop rasio 9:16 / 1:1, ubah resolusi, bisukan atau ganti audio video
-- Modul Pindai Dokumen ala pemindai saku: deteksi tepi otomatis, luruskan perspektif, banyak halaman, filter dokumen, OCR
-- Tampilan informatif: info berkas lengkap sebelum konversi, penjelasan tiap format, estimasi hasil, dan laporan sebelum vs sesudah
+**Pengalaman pakai**
+- 100% offline: tanpa izin internet, tanpa akun, tanpa unggah berkas
+- Informatif: info berkas lengkap sebelum konversi, penjelasan tiap format, estimasi ukuran hasil, progres bertahap, dan laporan sebelum vs sesudah
+- Proses banyak berkas sekaligus, dikelompokkan otomatis per format asal
+- Kirim berkas langsung dari aplikasi lain lewat menu Bagikan
+- Antrean di latar belakang dengan notifikasi progres
+- Tutorial dan panduan lengkap di dalam aplikasi
+- Mode terang dan gelap
+- Semua hasil tersimpan rapi di `Downloads/Ubahkan`
 
 ## Cara pakai
 
