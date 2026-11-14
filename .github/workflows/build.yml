@@ -19,22 +19,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
-      - name: Decode release keystore
+      - name: Decrypt release keystore
         env:
-          B1: ${{ secrets.KEYSTORE_B64_1 }}
-          B2: ${{ secrets.KEYSTORE_B64_2 }}
-          B3: ${{ secrets.KEYSTORE_B64_3 }}
-          B4: ${{ secrets.KEYSTORE_B64_4 }}
-          B5: ${{ secrets.KEYSTORE_B64_5 }}
-          B6: ${{ secrets.KEYSTORE_B64_6 }}
+          ENC_PASS: ${{ secrets.KEYSTORE_ENC_PASS }}
         run: |
-          printf '%s' "$B1$B2$B3$B4$B5$B6" | base64 -d > app/ubahkan-release.jks
-          echo "ce8224e94fa6eafc4b7d215c984ae03d94a65439eaba27f402d401a636dea23b  app/ubahkan-release.jks" | sha256sum -c -
+          openssl enc -d -aes-256-cbc -salt -pbkdf2 -pass pass:"$ENC_PASS" -in ubahkan-release.jks.enc -out app/ubahkan-release.jks
+          echo "d42d062284a1496b93129a09175d6340461bdc4d7b56a3941437bf575c1b9b0f  app/ubahkan-release.jks" | sha256sum -c -
       - name: Write local.properties
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_ENC_PASS }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEYSTORE_ENC_PASS }}
         run: |
           {
             echo "RELEASE_STORE_FILE=ubahkan-release.jks"
