@@ -20,6 +20,15 @@ enum class JobStatus {
     CANCELLED
 }
 
+// Jenis operasi sebuah job: konversi biasa atau alat khusus (Batch 1)
+enum class ToolOperation {
+    CONVERT,
+    COMPRESS_VIDEO,
+    COMPRESS_IMAGE,
+    TRIM_VIDEO,
+    AUTO_SPLIT
+}
+
 data class ConversionJob(
     val id: String = UUID.randomUUID().toString(),
     val inputUri: Uri,
@@ -32,7 +41,13 @@ data class ConversionJob(
     val progressMessage: String = AppStrings.get().queueWaiting,
     val outputFilePath: String? = null,
     val errorMessage: String? = null,
-    val extraInputUris: List<Uri> = emptyList()
+    val extraInputUris: List<Uri> = emptyList(),
+    val operation: ToolOperation = ToolOperation.CONVERT,
+    val targetSizeBytes: Long = 0L,
+    val trimStartSec: Double = 0.0,
+    val trimEndSec: Double = 0.0,
+    val splitSeconds: Int = 0,
+    val outputFilePaths: List<String> = emptyList()
 )
 
 data class ConversionJobRequest(
@@ -41,7 +56,12 @@ data class ConversionJobRequest(
     val mimeType: String,
     val targetFormat: String,
     val qualityPreset: Int,
-    val extraInputUris: List<Uri> = emptyList()
+    val extraInputUris: List<Uri> = emptyList(),
+    val operation: ToolOperation = ToolOperation.CONVERT,
+    val targetSizeBytes: Long = 0L,
+    val trimStartSec: Double = 0.0,
+    val trimEndSec: Double = 0.0,
+    val splitSeconds: Int = 0
 )
 
 data class SelectedFileItem(
@@ -76,7 +96,12 @@ object ConversionQueueManager {
         mimeType: String,
         targetFormat: String,
         qualityPreset: Int,
-        extraInputUris: List<Uri> = emptyList()
+        extraInputUris: List<Uri> = emptyList(),
+        operation: ToolOperation = ToolOperation.CONVERT,
+        targetSizeBytes: Long = 0L,
+        trimStartSec: Double = 0.0,
+        trimEndSec: Double = 0.0,
+        splitSeconds: Int = 0
     ): String {
         // Bersihkan riwayat antrean sesi sebelumnya jika antrean sedang menganggur
         if (!hasActiveOrWaitingJobs()) {
@@ -89,7 +114,12 @@ object ConversionQueueManager {
             mimeType = mimeType,
             targetFormat = targetFormat,
             qualityPreset = qualityPreset,
-            extraInputUris = extraInputUris
+            extraInputUris = extraInputUris,
+            operation = operation,
+            targetSizeBytes = targetSizeBytes,
+            trimStartSec = trimStartSec,
+            trimEndSec = trimEndSec,
+            splitSeconds = splitSeconds
         )
         _queueState.update { currentList -> currentList + newJob }
         return newJob.id
@@ -108,14 +138,25 @@ object ConversionQueueManager {
                 mimeType = req.mimeType,
                 targetFormat = req.targetFormat,
                 qualityPreset = req.qualityPreset,
-                extraInputUris = req.extraInputUris
+                extraInputUris = req.extraInputUris,
+                operation = req.operation,
+                targetSizeBytes = req.targetSizeBytes,
+                trimStartSec = req.trimStartSec,
+                trimEndSec = req.trimEndSec,
+                splitSeconds = req.splitSeconds
             )
         }
         _queueState.update { currentList -> currentList + newJobs }
         return newJobs.map { it.id }
     }
 
-    fun updateJobStatus(jobId: String, newStatus: JobStatus, filePath: String? = null, error: String? = null) {
+    fun updateJobStatus(
+        jobId: String,
+        newStatus: JobStatus,
+        filePath: String? = null,
+        error: String? = null,
+        filePaths: List<String>? = null
+    ) {
         _queueState.update { currentList ->
             currentList.map { job ->
                 if (job.id == jobId) {
@@ -139,7 +180,8 @@ object ConversionQueueManager {
                         progress = finalProgress,
                         progressMessage = finalMsg,
                         outputFilePath = filePath ?: job.outputFilePath,
-                        errorMessage = error ?: job.errorMessage
+                        errorMessage = error ?: job.errorMessage,
+                        outputFilePaths = filePaths ?: job.outputFilePaths
                     )
                 } else {
                     job

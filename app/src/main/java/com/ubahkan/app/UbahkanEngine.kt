@@ -957,6 +957,408 @@ object UbahkanEngine {
         }
     }
 
+    // --- 8. TOOL OPERATIONS (Batch 1: kompres target, potong, potong otomatis) ---
+
+    suspend fun executeToolOperation(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        operation: ToolOperation,
+        targetSizeBytes: Long = 0L,
+        trimStartSec: Double = 0.0,
+        trimEndSec: Double = 0.0,
+        splitSeconds: Int = 0,
+        onProgress: (String, Int) -> Unit
+    ): List<String> = withContext(Dispatchers.IO) {
+        activeJob = coroutineContext[Job]
+        try {
+            when (operation) {
+                ToolOperation.COMPRESS_VIDEO -> compressVideoToTargetSize(
+                    context, inputUri, originalFileName, targetSizeBytes, onProgress
+                )
+                ToolOperation.COMPRESS_IMAGE -> compressImageToTargetSize(
+                    context, inputUri, originalFileName, targetSizeBytes, onProgress
+                )
+                ToolOperation.TRIM_VIDEO -> trimVideo(
+                    context, inputUri, originalFileName, trimStartSec, trimEndSec, onProgress
+                )
+                ToolOperation.AUTO_SPLIT -> splitVideoAuto(
+                    context, inputUri, originalFileName, splitSeconds, onProgress
+                )
+                ToolOperation.CONVERT -> throw IllegalArgumentException(
+                    "Operasi CONVERT harus lewat executeConversion"
+                )
+            }
+        } finally {
+            if (activeJob == coroutineContext[Job]) {
+                activeJob = null
+            }
+            withContext(NonCancellable) {
+                currentStatus.value = ConvertState.Idle
+            }
+        }
+    }
+
+    // Salin berkas dari Uri ke berkas temp cache, sama seperti pola route konversi lain
+    private fun copyInputToTempFile(
+        context: Context,
+        inputUri: Uri,
+        prefix: String,
+        inputExt: String
+    ): File {
+        val strings = AppStrings.get()
+        val tempInput = OutputManager.createTempFile(context, prefix, inputExt)
+        context.contentResolver.openInputStream(inputUri)?.use { input ->
+            FileOutputStream(tempInput).use { output -> input.copyTo(output) }
+        } ?: throw IOException(strings.engineErrReadInput)
+        if (!tempInput.exists() || tempInput.length() <= 0) {
+            throw IOException(strings.engineErrInputEmpty)
+        }
+        return tempInput
+    }
+
+    // Durasi media dalam detik lewat FFprobeKit, 0.0 bila tidak terbaca
+    private fun probeDurationSeconds(mediaFile: File): Double {
+        val mediaInfo = FFprobeKit.getMediaInformation(mediaFile.absolutePath).mediaInformation
+        return mediaInfo?.duration?.toDoubleOrNull() ?: 0.0
+    }
+
+    // Jalankan satu perintah FFmpeg dan tunggu hasilnya, dengan progres berbasis durasi
+    private suspend fun runFfmpegCommand(
+        command: String,
+        totalDurationMs: Long,
+        statusFormat: String,
+        strings: Strings,
+        onProgress: (String, Int) -> Unit,
+        reportStats: Boolean = true
+    ): ReturnCode {
+        val ffmpegSession = CompletableDeferred<ReturnCode>()
+        FFmpegKit.executeAsync(
+            command,
+            { s -> ffmpegSession.complete(s.returnCode) },
+            { log -> Log.d(TAG, "[FFmpeg] ${log.message}") },
+            { stats ->
+                if (reportStats && !ffmpegSession.isCompleted) {
+                    if (totalDurationMs > 0) {
+                        val percentage = ((stats.time.toFloat() / totalDurationMs) * 95).toInt().coerceIn(5, 95)
+                        currentStatus.value = ConvertState.Converting(statusFormat, percentage)
+                        onProgress(strings.engineProcessedPercent(percentage), percentage)
+                    } else {
+                        val seconds = (stats.time / 1000).toLong()
+                        currentStatus.value = ConvertState.Converting(statusFormat, 50)
+                        onProgress(strings.engineProcessedSeconds(seconds), 50)
+                    }
+                }
+            }
+        )
+        return ffmpegSession.await()
+    }
+
+    // --- 8a. KOMPRES VIDEO KE TARGET UKURAN ---
+    // Bitrate video dihitung dari target: (targetByte * 8 / durasi) * 0.93 - audio 128k.
+    // Bila hasilnya di bawah 400 kbps, video diskalakan ke lebar maks 854 agar tetap layak.
+    private suspend fun compressVideoToTargetSize(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        targetSizeBytes: Long,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val tempInput = copyInputToTempFile(context, inputUri, "cmpv_in", inputExt)
+        val tempOutput = OutputManager.createTempFile(context, "cmpv_out", "mp4")
+
+        try {
+            updateProgress("mp4", strings.engineCompressingVideoTarget, 5, onProgress)
+
+            val durationSec = probeDurationSeconds(tempInput)
+            if (durationSec <= 0.0) {
+                throw IOException(strings.engineErrNoDuration)
+            }
+
+            val audioBitrateBps = 128_000L
+            val rawVideoBitrate = ((targetSizeBytes * 8.0 / durationSec) * 0.93 - audioBitrateBps).toLong()
+            // Lantai keamanan agar perintah tetap valid untuk target yang sangat kecil
+            val videoBitrateBps = rawVideoBitrate.coerceAtLeast(64_000L)
+            val scaleArg = if (rawVideoBitrate < 400_000L) {
+                " -vf \"scale='min(854,iw)':-2\""
+            } else {
+                ""
+            }
+
+            val command = "-y -i \"${tempInput.absolutePath}\"$scaleArg" +
+                " -c:v libx264 -b:v $videoBitrateBps -c:a aac -b:a 128k" +
+                " -movflags +faststart \"${tempOutput.absolutePath}\""
+
+            val returnCode = runFfmpegCommand(
+                command,
+                (durationSec * 1000).toLong(),
+                "mp4",
+                strings,
+                onProgress
+            )
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress("mp4", strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, "mp4")) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, "mp4")
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 8b. KOMPRES GAMBAR KE TARGET UKURAN (JPG) ---
+    // Pencarian biner nilai -q:v (2 = kualitas terbaik, 31 = terendah), maks 6 percobaan.
+    // Dipilih kualitas terbaik yang ukurannya <= target; bila tidak ada yang muat,
+    // dipakai hasil paling kecil pada kualitas terendah yang tercapai.
+    private suspend fun compressImageToTargetSize(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        targetSizeBytes: Long,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "jpg" }
+        val tempInput = copyInputToTempFile(context, inputUri, "cmpi_in", inputExt)
+        val attemptFiles = mutableListOf<File>()
+
+        try {
+            updateProgress("jpg", strings.engineCompressingImage, 5, onProgress)
+
+            var lo = 2
+            var hi = 31
+            var attempt = 0
+            var bestFile: File? = null
+            var bestQ = Int.MAX_VALUE
+            var smallestFile: File? = null
+
+            while (attempt < 6 && lo <= hi) {
+                currentCoroutineContext().ensureActive()
+                val mid = (lo + hi) / 2
+                attempt++
+                val attemptPercent = (attempt * 14).coerceAtMost(88)
+                updateProgress("jpg", strings.engineCompressingImageAttempt(attempt), attemptPercent, onProgress)
+
+                val tryFile = OutputManager.createTempFile(context, "cmpi_try", "jpg")
+                attemptFiles.add(tryFile)
+
+                // Paksa dimensi genap agar encoder MJPEG tidak gagal pada gambar ganjil
+                val command = "-y -i \"${tempInput.absolutePath}\"" +
+                    " -vf \"scale='trunc(iw/2)*2':'trunc(ih/2)*2'\"" +
+                    " -q:v $mid \"${tryFile.absolutePath}\""
+                val returnCode = runFfmpegCommand(command, 0L, "jpg", strings, onProgress, reportStats = false)
+
+                if (ReturnCode.isCancel(returnCode)) {
+                    throw CancellationException(strings.engineCancelled)
+                }
+                if (!ReturnCode.isSuccess(returnCode)) {
+                    throw IOException(strings.engineErrFFmpeg(returnCode.value))
+                }
+
+                val size = tryFile.length()
+                if (size > 0) {
+                    if (smallestFile == null || size < smallestFile!!.length()) {
+                        smallestFile = tryFile
+                    }
+                    if (size <= targetSizeBytes) {
+                        if (mid < bestQ) {
+                            bestQ = mid
+                            bestFile = tryFile
+                        }
+                        hi = mid - 1 // muat: coba kualitas yang lebih baik lagi
+                    } else {
+                        lo = mid + 1 // terlalu besar: turunkan kualitas
+                    }
+                } else {
+                    lo = mid + 1
+                }
+            }
+
+            val chosen = bestFile ?: smallestFile
+                ?: throw IOException(strings.engineErrSaveImage)
+
+            updateProgress("jpg", strings.engineFinalizingValidating, 96, onProgress)
+            when (val valResult = ConversionValidator.validateFile(chosen, "jpg")) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, chosen, originalFileName, "jpg")
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput, *attemptFiles.toTypedArray())
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, *attemptFiles.toTypedArray())
+            throw e
+        }
+    }
+
+    // --- 8c. POTONG VIDEO (TRIM) ---
+    // Re-encode potongan dari detik mulai sampai detik selesai agar hasil akurat per frame.
+    private suspend fun trimVideo(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        startSec: Double,
+        endSec: Double,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        // Wadah keluaran dipertahankan untuk mp4/mov/mkv, selain itu mp4
+        val outExt = if (inputExt in listOf("mp4", "mov", "mkv")) inputExt else "mp4"
+        val tempInput = copyInputToTempFile(context, inputUri, "trim_in", inputExt)
+        val tempOutput = OutputManager.createTempFile(context, "trim_out", outExt)
+
+        try {
+            updateProgress(outExt, strings.engineTrimmingVideo, 5, onProgress)
+
+            val startArg = String.format(java.util.Locale.US, "%.3f", startSec)
+            val endArg = String.format(java.util.Locale.US, "%.3f", endSec)
+            val fastStartArg = if (outExt in listOf("mp4", "mov")) " -movflags +faststart" else ""
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -ss $startArg -to $endArg" +
+                " -c:v libx264 -c:a aac$fastStartArg \"${tempOutput.absolutePath}\""
+
+            val segmentDurationMs = ((endSec - startSec) * 1000).toLong().coerceAtLeast(0L)
+            val returnCode = runFfmpegCommand(command, segmentDurationMs, outExt, strings, onProgress)
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            updateProgress(outExt, strings.engineFinalizingValidating, 98, onProgress)
+            when (val valResult = ConversionValidator.validateFile(tempOutput, outExt)) {
+                is ConversionValidator.ValidationResult.Invalid -> {
+                    throw IOException(strings.engineErrInvalidOutput(valResult.reason))
+                }
+                is ConversionValidator.ValidationResult.Valid -> {
+                    val finalPath = OutputManager.finalizeOutput(context, tempOutput, originalFileName, outExt)
+                        ?: throw IOException(strings.engineErrSaveOutput)
+                    OutputManager.cleanTempFiles(tempInput)
+                    withContext(Dispatchers.Main) {
+                        currentStatus.value = ConvertState.Success
+                        onProgress(strings.engineFinished100, 100)
+                    }
+                    return listOf(finalPath)
+                }
+            }
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput, tempOutput)
+            throw e
+        }
+    }
+
+    // --- 8d. POTONG OTOMATIS (SEGMENT MUXER) ---
+    // Stream copy per segmen: cepat, potongan jatuh di keyframe terdekat.
+    // Semua bagian difinalisasi ke Downloads/Ubahkan dan dikembalikan sebagai daftar path.
+    private suspend fun splitVideoAuto(
+        context: Context,
+        inputUri: Uri,
+        originalFileName: String,
+        segmentSeconds: Int,
+        onProgress: (String, Int) -> Unit
+    ): List<String> {
+        val strings = AppStrings.get()
+        val inputExt = originalFileName.substringAfterLast('.', "").trim().lowercase().ifEmpty { "mp4" }
+        val tempInput = copyInputToTempFile(context, inputUri, "split_in", inputExt)
+        val splitDir = File(context.cacheDir, "split_${java.util.UUID.randomUUID().toString().take(8)}")
+
+        try {
+            updateProgress(inputExt, strings.engineSplittingVideo, 5, onProgress)
+            if (!splitDir.exists()) splitDir.mkdirs()
+
+            val baseName = originalFileName.substringBeforeLast('.', "file")
+                .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+                .ifBlank { "file" }
+            val patternFile = File(splitDir, "$baseName - Bagian %02d.$inputExt")
+
+            val command = "-y -i \"${tempInput.absolutePath}\"" +
+                " -f segment -segment_time $segmentSeconds -c copy -reset_timestamps 1" +
+                " \"${patternFile.absolutePath}\""
+
+            val durationSec = probeDurationSeconds(tempInput)
+            val returnCode = runFfmpegCommand(
+                command,
+                (durationSec * 1000).toLong(),
+                inputExt,
+                strings,
+                onProgress
+            )
+
+            if (ReturnCode.isCancel(returnCode)) {
+                throw CancellationException(strings.engineCancelled)
+            }
+            if (!ReturnCode.isSuccess(returnCode)) {
+                throw IOException(strings.engineErrFFmpeg(returnCode.value))
+            }
+
+            // Urutkan berdasarkan nomor bagian (bukan leksikografis, agar Bagian 100 sesudah 99)
+            val partNumberRegex = Regex("Bagian (\\d+)")
+            val partFiles = (splitDir.listFiles()?.filter { it.isFile && it.length() > 0 } ?: emptyList())
+                .sortedBy { file ->
+                    partNumberRegex.find(file.name)?.groupValues?.get(1)?.toIntOrNull() ?: Int.MAX_VALUE
+                }
+            if (partFiles.isEmpty()) {
+                throw IOException(strings.engineErrSplitNoParts)
+            }
+
+            updateProgress(inputExt, strings.engineFinalizingValidating, 96, onProgress)
+            val finalPaths = mutableListOf<String>()
+            for (part in partFiles) {
+                currentCoroutineContext().ensureActive()
+                val saved = OutputManager.finalizeOutput(context, part, part.name, inputExt)
+                if (saved != null) finalPaths.add(saved)
+            }
+            if (finalPaths.isEmpty()) {
+                throw IOException(strings.engineErrSaveOutput)
+            }
+
+            OutputManager.cleanTempFiles(tempInput)
+            splitDir.deleteRecursively()
+            withContext(Dispatchers.Main) {
+                currentStatus.value = ConvertState.Success
+                onProgress(strings.engineFinished100, 100)
+            }
+            return finalPaths
+        } catch (e: Exception) {
+            OutputManager.cleanTempFiles(tempInput)
+            splitDir.deleteRecursively()
+            throw e
+        }
+    }
+
     private fun updateProgress(
         format: String,
         message: String,

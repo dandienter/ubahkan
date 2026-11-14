@@ -41,12 +41,14 @@ import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.OutputManager
 import com.ubahkan.app.core.SelectedFileItem
 import com.ubahkan.app.core.Strings
+import com.ubahkan.app.core.ToolOperation
 import com.ubahkan.app.ui.components.UbahkanHomeTopBar
 import com.ubahkan.app.ui.screens.BottomSheetConverter
 import com.ubahkan.app.ui.screens.HomeScreen
 import com.ubahkan.app.ui.screens.ProgressScreen
 import com.ubahkan.app.ui.screens.SettingsScreen
 import com.ubahkan.app.ui.screens.SplashScreen
+import com.ubahkan.app.ui.screens.ToolActionSheet
 import com.ubahkan.app.ui.screens.ToolsScreen
 import com.ubahkan.app.ui.screens.WelcomeScreen
 import com.ubahkan.app.ui.theme.UbahkanTheme
@@ -86,12 +88,22 @@ class MainActivity : ComponentActivity() {
                 val size = getFileSizeFromUri(this, uri)
                 SelectedFileItem(uri, name, mime, size)
             }
-            showBottomSheet = true
+            // Bila pemilih dibuka dari tab Tools (Batch 1), tampilkan sheet alat;
+            // selain itu tampilkan sheet konversi biasa.
+            if (pendingToolOperation != null) {
+                showToolSheet = true
+            } else {
+                showBottomSheet = true
+            }
+        } else {
+            pendingToolOperation = null
         }
     }
 
     private var selectedFilesForConversion by mutableStateOf<List<SelectedFileItem>>(emptyList())
     private var showBottomSheet by mutableStateOf(false)
+    private var pendingToolOperation by mutableStateOf<ToolOperation?>(null)
+    private var showToolSheet by mutableStateOf(false)
 
     companion object {
         var isAppInForeground = false
@@ -416,9 +428,32 @@ class MainActivity : ComponentActivity() {
 
                                     UbahkanTab.Tools -> {
                                         ToolsScreen(
-                                            onPickFileForTool = { filePickerLauncher.launch("*/*") },
+                                            onPickFileForTool = { operation, mimeType ->
+                                                pendingToolOperation = operation
+                                                filePickerLauncher.launch(mimeType)
+                                            },
                                             onBackClick = { currentTab = UbahkanTab.Home }
                                         )
+
+                                        // Sheet konfigurasi alat Batch 1 untuk file terpilih
+                                        val toolOperation = pendingToolOperation
+                                        if (showToolSheet && toolOperation != null && selectedFilesForConversion.isNotEmpty()) {
+                                            ToolActionSheet(
+                                                file = selectedFilesForConversion.first(),
+                                                operation = toolOperation,
+                                                onDismiss = {
+                                                    showToolSheet = false
+                                                    pendingToolOperation = null
+                                                    selectedFilesForConversion = emptyList()
+                                                },
+                                                onStarted = {
+                                                    showToolSheet = false
+                                                    pendingToolOperation = null
+                                                    selectedFilesForConversion = emptyList()
+                                                    showProgressScreen = true
+                                                }
+                                            )
+                                        }
                                     }
 
                                     UbahkanTab.Settings -> {
@@ -584,6 +619,44 @@ fun shareFileDirectly(context: Context, file: File, strings: Strings = AppString
         context.startActivity(Intent.createChooser(intent, strings.shareViaTitle))
     } catch (e: Exception) {
         Toast.makeText(context, strings.shareFailedToast, Toast.LENGTH_SHORT).show()
+    }
+}
+
+// Bagikan banyak berkas sekaligus (hasil Potong Otomatis) ke WhatsApp untuk Status WA.
+// WhatsApp tidak menyediakan API posting status otomatis, jadi intent dibuka di WhatsApp
+// dan pengguna menekan kirim sekali. Bila WhatsApp tidak ada, fallback ke chooser biasa.
+fun sharePartsToWhatsAppStatus(context: Context, files: List<File>, strings: Strings = AppStrings.get()) {
+    val validFiles = files.filter { it.exists() && it.length() > 0 }
+    if (validFiles.isEmpty()) {
+        Toast.makeText(context, strings.fileNotFoundToast, Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    fun buildSendIntent(): Intent {
+        val uris = ArrayList(validFiles.map { file ->
+            FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+        })
+        val clip = ClipData.newRawUri("", uris.first())
+        uris.drop(1).forEach { clip.addItem(ClipData.Item(it)) }
+        return Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+            type = getExplicitMimeType(validFiles.first().extension)
+            putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+            clipData = clip
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    val openedWhatsApp = runCatching {
+        val waIntent = buildSendIntent().apply { setPackage("com.whatsapp") }
+        context.startActivity(waIntent)
+    }.isSuccess
+
+    if (!openedWhatsApp) {
+        runCatching {
+            context.startActivity(Intent.createChooser(buildSendIntent(), strings.shareViaTitle))
+        }.onFailure {
+            Toast.makeText(context, strings.shareToWhatsAppFailedToast, Toast.LENGTH_SHORT).show()
+        }
     }
 }
 

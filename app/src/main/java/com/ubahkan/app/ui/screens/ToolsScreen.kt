@@ -21,11 +21,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ubahkan.app.core.AppStrings
+import com.ubahkan.app.core.ToolOperation
 import com.ubahkan.app.ui.components.UbahkanScreenHeader
 
 @Composable
 fun ToolsScreen(
-    onPickFileForTool: () -> Unit,
+    onPickFileForTool: (ToolOperation, String) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -47,6 +48,50 @@ fun ToolsScreen(
             UbahkanScreenHeader(
                 title = strings.toolsTitle,
                 subtitle = strings.toolsSubtitle
+            )
+        }
+
+        // Batch 1: alat ukuran dan potong (bisa diketuk, membuka pemilih file)
+        item {
+            SectionHeading(
+                title = strings.toolsActionsTitle,
+                subtitle = strings.toolsActionsSubtitle
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolCompressVideoTitle,
+                description = strings.toolCompressVideoDesc,
+                icon = Icons.Default.Compress,
+                onClick = { onPickFileForTool(ToolOperation.COMPRESS_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolCompressImageTitle,
+                description = strings.toolCompressImageDesc,
+                icon = Icons.Default.PhotoSizeSelectLarge,
+                onClick = { onPickFileForTool(ToolOperation.COMPRESS_IMAGE, "image/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolTrimTitle,
+                description = strings.toolTrimDesc,
+                icon = Icons.Default.ContentCut,
+                onClick = { onPickFileForTool(ToolOperation.TRIM_VIDEO, "video/*") }
+            )
+        }
+
+        item {
+            ToolActionCard(
+                title = strings.toolSplitTitle,
+                description = strings.toolSplitDesc,
+                icon = Icons.Default.CallSplit,
+                onClick = { onPickFileForTool(ToolOperation.AUTO_SPLIT, "video/*") }
             )
         }
 
@@ -178,6 +223,73 @@ private fun SectionHeading(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun ToolActionCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    val strings = AppStrings.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FeatureIcon(icon)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.UploadFile,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = strings.toolPickHint,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
     }
 }
 

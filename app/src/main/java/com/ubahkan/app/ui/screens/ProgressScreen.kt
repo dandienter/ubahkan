@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,7 +31,10 @@ import androidx.compose.ui.unit.sp
 import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.ConversionQueueManager
 import com.ubahkan.app.core.JobStatus
+import com.ubahkan.app.core.ToolOperation
+import com.ubahkan.app.sharePartsToWhatsAppStatus
 import com.ubahkan.app.ui.components.UbahkanLogo
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +54,15 @@ fun ProgressScreen(
 
     val isFinished = totalCount > 0 && queueState.none { it.status == JobStatus.PROCESSING || it.status == JobStatus.WAITING }
     val isAllSuccess = isFinished && failedCount == 0
+
+    // Berkas hasil Potong Otomatis yang selesai, untuk tombol Bagikan ke Status WA
+    val splitPartFiles = remember(queueState) {
+        queueState
+            .filter { it.operation == ToolOperation.AUTO_SPLIT && it.status == JobStatus.COMPLETED }
+            .flatMap { it.outputFilePaths }
+            .map { File(it) }
+            .filter { it.exists() }
+    }
 
     // Konfirmasi pembatalan
     var showCancelDialog by remember { mutableStateOf(false) }
@@ -247,6 +261,10 @@ fun ProgressScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    if (splitPartFiles.isNotEmpty()) {
+                        WhatsAppStatusShareButton(files = splitPartFiles)
+                    }
+
                     Button(
                         onClick = onViewResult,
                         modifier = Modifier
@@ -316,6 +334,11 @@ fun ProgressScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
+                if (splitPartFiles.isNotEmpty()) {
+                    WhatsAppStatusShareButton(files = splitPartFiles)
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
                 Button(
                     onClick = onFinish,
                     modifier = Modifier
@@ -329,6 +352,34 @@ fun ProgressScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+// Tombol hitam berbagi semua potongan hasil Potong Otomatis ke WhatsApp (Status WA)
+@Composable
+private fun WhatsAppStatusShareButton(files: List<File>) {
+    val context = LocalContext.current
+    val strings = AppStrings.current
+
+    Button(
+        onClick = { sharePartsToWhatsAppStatus(context, files, strings) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.onBackground,
+            contentColor = MaterialTheme.colorScheme.background
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Share,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(strings.btnShareToWhatsAppStatus, fontWeight = FontWeight.Bold)
     }
 }
 

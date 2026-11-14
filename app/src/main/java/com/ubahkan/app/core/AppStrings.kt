@@ -268,6 +268,44 @@ interface Strings {
     val engineSavingEpubTxt: String
     val engineErrSaveTxt: String
 
+    // Tool Operations - Engine (Batch 1: kompres target, potong, potong otomatis)
+    val engineCompressingVideoTarget: String
+    fun engineCompressingImageAttempt(attempt: Int): String
+    val engineTrimmingVideo: String
+    val engineSplittingVideo: String
+    val engineErrSplitNoParts: String
+    val engineErrNoDuration: String
+    val btnShareToWhatsAppStatus: String
+    val shareToWhatsAppFailedToast: String
+
+    // Tool Operations - UI (Batch 1)
+    val toolsActionsTitle: String
+    val toolsActionsSubtitle: String
+    val toolCompressVideoTitle: String
+    val toolCompressVideoDesc: String
+    val toolCompressImageTitle: String
+    val toolCompressImageDesc: String
+    val toolTrimTitle: String
+    val toolTrimDesc: String
+    val toolSplitTitle: String
+    val toolSplitDesc: String
+    val toolPickHint: String
+    val toolStartButton: String
+    val toolTargetSizeLabel: String
+    val toolCustomSizeMbLabel: String
+    val toolCustomSizeKbLabel: String
+    val toolTrimStartLabel: String
+    val toolTrimEndLabel: String
+    val toolTrimTimeHint: String
+    fun toolVideoDurationInfo(duration: String): String
+    val toolSplitEveryLabel: String
+    fun toolSecondsUnit(seconds: Int): String
+    val toolErrCustomSize: String
+    val toolErrTimeFormat: String
+    val toolErrTrimRange: String
+    val toolErrNotVideo: String
+    val toolErrNotImage: String
+
     // Core Validators & Parsers
     val validatorFileNotFound: String
     val validatorNotRegularFile: String
@@ -539,6 +577,42 @@ object IndonesianStrings : Strings {
     override val engineSavingEpubTxt = "Menyimpan teks hasil ekstraksi..."
     override val engineErrSaveTxt = "Gagal menyimpan file TXT"
 
+    override val engineCompressingVideoTarget = "Mengompres video ke ukuran target..."
+    override fun engineCompressingImageAttempt(attempt: Int) = "Mencoba kualitas gambar (percobaan $attempt)..."
+    override val engineTrimmingVideo = "Memotong video..."
+    override val engineSplittingVideo = "Membagi video menjadi potongan..."
+    override val engineErrSplitNoParts = "Tidak ada potongan yang dihasilkan."
+    override val engineErrNoDuration = "Tidak dapat membaca durasi media."
+    override val btnShareToWhatsAppStatus = "Bagikan ke Status WA"
+    override val shareToWhatsAppFailedToast = "Tidak dapat membuka berbagi ke WhatsApp."
+
+    override val toolsActionsTitle = "Alat Ukuran dan Potong"
+    override val toolsActionsSubtitle = "Kompres ke target ukuran, potong, dan bagi video."
+    override val toolCompressVideoTitle = "Kompres Video ke Target"
+    override val toolCompressVideoDesc = "Perkecil video sampai mendekati ukuran pilihan, misalnya 10 MB buat WhatsApp."
+    override val toolCompressImageTitle = "Kompres Gambar ke Target"
+    override val toolCompressImageDesc = "Perkecil gambar JPG sampai di bawah target KB, misalnya buat berkas lamaran."
+    override val toolTrimTitle = "Potong Video"
+    override val toolTrimDesc = "Ambil bagian video dari waktu mulai sampai waktu selesai."
+    override val toolSplitTitle = "Potong Otomatis"
+    override val toolSplitDesc = "Bagi video panjang jadi potongan rata, siap buat Status WhatsApp."
+    override val toolPickHint = "Ketuk untuk memilih file"
+    override val toolStartButton = "Mulai"
+    override val toolTargetSizeLabel = "Ukuran target"
+    override val toolCustomSizeMbLabel = "Ukuran lain (MB)"
+    override val toolCustomSizeKbLabel = "Ukuran lain (KB)"
+    override val toolTrimStartLabel = "Mulai"
+    override val toolTrimEndLabel = "Selesai"
+    override val toolTrimTimeHint = "Format mm:ss atau detik, contoh 1:30"
+    override fun toolVideoDurationInfo(duration: String) = "Durasi video: $duration"
+    override val toolSplitEveryLabel = "Potong setiap"
+    override fun toolSecondsUnit(seconds: Int) = "$seconds detik"
+    override val toolErrCustomSize = "Isi ukuran target yang valid, lebih besar dari 0."
+    override val toolErrTimeFormat = "Format waktu tidak valid. Pakai mm:ss atau detik."
+    override val toolErrTrimRange = "Waktu selesai harus sesudah waktu mulai dan tidak melewati durasi video."
+    override val toolErrNotVideo = "File terpilih bukan video."
+    override val toolErrNotImage = "File terpilih bukan gambar."
+
     override val validatorFileNotFound = "Berkas output tidak ditemukan di sistem penyimpanan."
     override val validatorNotRegularFile = "Path output bukan merupakan berkas reguler."
     override val validatorOutputEmpty = "Berkas output kosong (ukuran 0 byte)."
@@ -808,6 +882,42 @@ object EnglishStrings : Strings {
     override val engineErrReadEpub = "Cannot read EPUB file."
     override val engineSavingEpubTxt = "Saving extracted text..."
     override val engineErrSaveTxt = "Failed to save TXT file"
+
+    override val engineCompressingVideoTarget = "Compressing video to target size..."
+    override fun engineCompressingImageAttempt(attempt: Int) = "Trying image quality (attempt $attempt)..."
+    override val engineTrimmingVideo = "Trimming video..."
+    override val engineSplittingVideo = "Splitting video into parts..."
+    override val engineErrSplitNoParts = "No parts were produced."
+    override val engineErrNoDuration = "Unable to read media duration."
+    override val btnShareToWhatsAppStatus = "Share to WA Status"
+    override val shareToWhatsAppFailedToast = "Could not open WhatsApp sharing."
+
+    override val toolsActionsTitle = "Size and Cut Tools"
+    override val toolsActionsSubtitle = "Compress to a target size, trim, and split videos."
+    override val toolCompressVideoTitle = "Compress Video to Size"
+    override val toolCompressVideoDesc = "Shrink a video to around a chosen size, for example 10 MB for WhatsApp."
+    override val toolCompressImageTitle = "Compress Image to Size"
+    override val toolCompressImageDesc = "Shrink a JPG image to under a target KB, for example for job applications."
+    override val toolTrimTitle = "Trim Video"
+    override val toolTrimDesc = "Cut a section of a video from a start time to an end time."
+    override val toolSplitTitle = "Auto Split"
+    override val toolSplitDesc = "Split a long video into even parts, ready for WhatsApp Status."
+    override val toolPickHint = "Tap to pick a file"
+    override val toolStartButton = "Start"
+    override val toolTargetSizeLabel = "Target size"
+    override val toolCustomSizeMbLabel = "Custom size (MB)"
+    override val toolCustomSizeKbLabel = "Custom size (KB)"
+    override val toolTrimStartLabel = "Start"
+    override val toolTrimEndLabel = "End"
+    override val toolTrimTimeHint = "Format mm:ss or seconds, e.g. 1:30"
+    override fun toolVideoDurationInfo(duration: String) = "Video duration: $duration"
+    override val toolSplitEveryLabel = "Split every"
+    override fun toolSecondsUnit(seconds: Int) = "$seconds seconds"
+    override val toolErrCustomSize = "Enter a valid target size greater than 0."
+    override val toolErrTimeFormat = "Invalid time format. Use mm:ss or seconds."
+    override val toolErrTrimRange = "End time must be after start time and within the video duration."
+    override val toolErrNotVideo = "The selected file is not a video."
+    override val toolErrNotImage = "The selected file is not an image."
 
     override val validatorFileNotFound = "Output file not found in storage."
     override val validatorNotRegularFile = "Output path is not a regular file."

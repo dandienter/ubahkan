@@ -16,6 +16,7 @@ import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.ConversionJob
 import com.ubahkan.app.core.ConversionQueueManager
 import com.ubahkan.app.core.JobStatus
+import com.ubahkan.app.core.ToolOperation
 import kotlinx.coroutines.*
 
 class UbahkanService : Service() {
@@ -121,37 +122,59 @@ class UbahkanService : Service() {
 
                 try {
                     val allUris = listOf(job.inputUri) + job.extraInputUris
-                    val finalPath = if (allUris.size > 1 && job.targetFormat.equals("pdf", ignoreCase = true)) {
-                        UbahkanEngine.mergeImagesToPdf(
-                            context = this@UbahkanService,
-                            inputUris = allUris,
-                            originalFileName = job.originalFileName,
-                            qualityPreset = job.qualityPreset,
-                            onProgress = { stepMsg, percent ->
-                                ConversionQueueManager.updateJobProgress(job.id, percent, stepMsg)
-                                if (!MainActivity.isAppInForeground && !isCancelled) {
-                                    updateNotificationForJob(job, percent, stepMsg)
-                                }
-                            }
-                        )
-                    } else {
-                        UbahkanEngine.executeConversion(
-                            context = this@UbahkanService,
-                            inputUri = job.inputUri,
-                            outputExtension = job.targetFormat,
-                            originalFileName = job.originalFileName,
-                            qualityPreset = job.qualityPreset,
-                            onProgress = { stepMsg, percent ->
-                                ConversionQueueManager.updateJobProgress(job.id, percent, stepMsg)
-                                // Smart Notification: hanya update notifikasi di background saat aplikasi aktif
-                                if (!MainActivity.isAppInForeground && !isCancelled) {
-                                    updateNotificationForJob(job, percent, stepMsg)
-                                }
-                            }
-                        )
+                    val progressCallback: (String, Int) -> Unit = { stepMsg, percent ->
+                        ConversionQueueManager.updateJobProgress(job.id, percent, stepMsg)
+                        // Smart Notification: hanya update notifikasi di background saat aplikasi aktif
+                        if (!MainActivity.isAppInForeground && !isCancelled) {
+                            updateNotificationForJob(job, percent, stepMsg)
+                        }
                     }
 
-                    ConversionQueueManager.updateJobStatus(job.id, JobStatus.COMPLETED, filePath = finalPath)
+                    val finalPaths: List<String> = when {
+                        allUris.size > 1 && job.targetFormat.equals("pdf", ignoreCase = true) -> {
+                            listOf(
+                                UbahkanEngine.mergeImagesToPdf(
+                                    context = this@UbahkanService,
+                                    inputUris = allUris,
+                                    originalFileName = job.originalFileName,
+                                    qualityPreset = job.qualityPreset,
+                                    onProgress = progressCallback
+                                )
+                            )
+                        }
+                        job.operation != ToolOperation.CONVERT -> {
+                            UbahkanEngine.executeToolOperation(
+                                context = this@UbahkanService,
+                                inputUri = job.inputUri,
+                                originalFileName = job.originalFileName,
+                                operation = job.operation,
+                                targetSizeBytes = job.targetSizeBytes,
+                                trimStartSec = job.trimStartSec,
+                                trimEndSec = job.trimEndSec,
+                                splitSeconds = job.splitSeconds,
+                                onProgress = progressCallback
+                            )
+                        }
+                        else -> {
+                            listOf(
+                                UbahkanEngine.executeConversion(
+                                    context = this@UbahkanService,
+                                    inputUri = job.inputUri,
+                                    outputExtension = job.targetFormat,
+                                    originalFileName = job.originalFileName,
+                                    qualityPreset = job.qualityPreset,
+                                    onProgress = progressCallback
+                                )
+                            )
+                        }
+                    }
+
+                    ConversionQueueManager.updateJobStatus(
+                        job.id,
+                        JobStatus.COMPLETED,
+                        filePath = finalPaths.firstOrNull(),
+                        filePaths = finalPaths
+                    )
                 } catch (e: CancellationException) {
                     ConversionQueueManager.updateJobStatus(job.id, JobStatus.CANCELLED)
                     if (isCancelled || !ConversionQueueManager.hasActiveOrWaitingJobs()) break
