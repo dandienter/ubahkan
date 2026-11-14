@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" width="120" alt="Logo Ubahkan"></p>
+
 <h1 align="center">Ubahkan</h1>
 
 <p align="center"><strong>Konversi file, tanpa internet.</strong></p>
