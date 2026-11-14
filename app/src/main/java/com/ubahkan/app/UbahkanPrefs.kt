@@ -7,8 +7,21 @@ class UbahkanPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("ubahkan_settings", Context.MODE_PRIVATE)
 
     var themeOption: Int // 0: System, 1: Light, 2: Dark
-        get() = prefs.getInt("theme", 0)
+        // Bawaan instalasi baru: Terang (1). Pilihan lain tetap tersimpan seperti biasa.
+        get() = prefs.getInt("theme", 1)
         set(value) = prefs.edit().putInt("theme", value).apply()
+
+    var toolsViewMode: Int // 0: List, 1: Grid (tab Alat)
+        get() = prefs.getInt("tools_view", 0)
+        set(value) = prefs.edit().putInt("tools_view", value).apply()
+
+    var savedBytesTotal: Long // Akumulasi ruang yang dihemat dari konversi yang tercatat ukurannya
+        get() = prefs.getLong("saved_bytes_total", 0L)
+        set(value) = prefs.edit().putLong("saved_bytes_total", value).apply()
+
+    var countedJobIds: Set<String> // ID pekerjaan yang hematnya sudah masuk savedBytesTotal
+        get() = prefs.getStringSet("counted_job_ids", emptySet()) ?: emptySet()
+        set(value) = prefs.edit().putStringSet("counted_job_ids", value).apply()
 
     var showNotifications: Boolean
         get() = prefs.getBoolean("notif", true)

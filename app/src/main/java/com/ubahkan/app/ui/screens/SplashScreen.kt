@@ -113,10 +113,20 @@ fun SplashScreen(
     val arrowColor = MaterialTheme.colorScheme.primary
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
 
+    // Latar splash mengikuti tema efektif: terang memakai #FCFCFA
+    // eksplisit (bawaan instalasi baru), gelap memakai latar tema.
+    val isDarkSplash = MaterialTheme.colorScheme.background ==
+        com.ubahkan.app.ui.theme.UbahkanDarkBackground
+    val splashBackground = if (isDarkSplash) {
+        MaterialTheme.colorScheme.background
+    } else {
+        com.ubahkan.app.ui.theme.UbahkanSplashBackground
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(splashBackground)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null

@@ -3,7 +3,8 @@ package com.ubahkan.app.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,25 +12,33 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ubahkan.app.BuildConfig
 import com.ubahkan.app.UbahkanPrefs
 import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.EnglishStrings
 import com.ubahkan.app.core.IndonesianStrings
 import com.ubahkan.app.ui.components.UbahkanScreenHeader
+import com.ubahkan.app.ui.theme.UbahkanBlue
+
+// ============================================================
+// SETTINGS SCREEN (UI 1.4.0 - bahasa modern ui-v6)
+// Grup kartu putih melayang radius 22dp di latar abu lembut:
+// Tampilan (tema ubin + bahasa), Konversi (kualitas pil +
+// saklar biru), Lainnya (baterai, lisensi, tentang).
+// ============================================================
 
 @Composable
 fun SettingsScreen(
@@ -51,7 +60,8 @@ fun SettingsScreen(
     var closeShare by remember { mutableStateOf(prefs.closeAfterShare) }
     var qualityPreset by remember { mutableStateOf(prefs.qualityPreset) }
     var showLicensesDialog by remember { mutableStateOf(false) }
-    
+    var showLanguageDialog by remember { mutableStateOf(false) }
+
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     var isBatteryOk by remember {
         mutableStateOf(com.ubahkan.app.checkBatteryOptimizationDisabled(context))
@@ -68,14 +78,27 @@ fun SettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    fun applyLanguage(code: String) {
+        selectedLanguage = code
+        prefs.appLanguage = code
+        AppStrings.setLanguage(code)
+        onLanguageChange?.invoke(code)
+        val msg = if (code == "en") {
+            EnglishStrings.languageSetToast
+        } else {
+            IndonesianStrings.languageSetToast
+        }
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(top = 20.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Header  -  tanpa back button (bottom nav sudah ada)
+        // Header - tanpa back button (bottom nav sudah ada)
         item {
             UbahkanScreenHeader(
                 title = strings.settingsTitle,
@@ -83,133 +106,66 @@ fun SettingsScreen(
             )
         }
 
-        // --- 1. TEMA APLIKASI ---
+        // ============ GRUP TAMPILAN ============
+        item { SettingsGroupLabel(text = strings.settingsGroupAppearance) }
         item {
-            SettingsSectionCard(title = strings.themeSectionTitle, icon = Icons.Default.Palette) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        Pair(strings.themeLight, 1),
-                        Pair(strings.themeDark, 2),
-                        Pair(strings.themeSystem, 0)
-                    ).forEach { (title, idx) ->
-                        val isSelected = currentTheme == idx
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { onThemeChange(idx) },
-                            label = {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // --- 2. BAHASA / LANGUAGE ---
-        item {
-            SettingsSectionCard(title = strings.languageSectionTitle, icon = Icons.Default.Language) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        Pair(strings.langIndonesian, "id"),
-                        Pair(strings.langEnglish, "en")
-                    ).forEach { (label, code) ->
-                        val isSelected = selectedLanguage == code
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedLanguage = code
-                                prefs.appLanguage = code
-                                AppStrings.setLanguage(code)
-                                onLanguageChange?.invoke(code)
-                                val msg = if (code == "en") {
-                                    EnglishStrings.languageSetToast
-                                } else {
-                                    IndonesianStrings.languageSetToast
-                                }
-                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                            },
-                            label = {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-                                    maxLines = 1
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // --- 3. KUALITAS KONVERSI DEFAULT ---
-        item {
-            SettingsSectionCard(title = strings.qualitySectionTitle, icon = Icons.Default.Tune) {
-                Text(
-                    text = strings.qualitySectionDesc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            SettingsGroupCard {
+                // Tema Aplikasi: header tile + tiga ubin pilihan
+                SettingsTileHeader(
+                    icon = Icons.Outlined.WbSunny,
+                    title = strings.themeSectionTitle,
+                    desc = strings.themeDefaultNote
                 )
-
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        Pair(strings.qualityLow, 2),
-                        Pair(strings.qualityMedium, 1),
-                        Pair(strings.qualityHigh, 0),
-                        Pair(strings.qualityInstant, 3)
-                    ).forEach { (title, idx) ->
-                        val isSelected = qualityPreset == idx
-                        Surface(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                            onClick = {
-                                qualityPreset = idx
-                                prefs.qualityPreset = idx
-                            }
-                        ) {
-                            Text(
-                                text = title,
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-                                maxLines = 1
-                            )
-                        }
+                        Triple(strings.themeLight, 1, Icons.Outlined.WbSunny),
+                        Triple(strings.themeDark, 2, Icons.Outlined.DarkMode),
+                        Triple(strings.themeSystem, 0, Icons.Outlined.DesktopWindows)
+                    ).forEach { (title, idx, icon) ->
+                        ThemeTile(
+                            label = title,
+                            icon = icon,
+                            selected = currentTheme == idx,
+                            onClick = { onThemeChange(idx) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                SettingsGroupDivider()
 
+                // Bahasa: baris tile + nilai + chevron, membuka dialog pilihan
+                SettingsNavRow(
+                    icon = Icons.Outlined.Language,
+                    title = strings.languageSectionTitle,
+                    value = if (selectedLanguage == "en") strings.langEnglish else strings.langIndonesian,
+                    onClick = { showLanguageDialog = true }
+                )
+            }
+        }
+
+        // ============ GRUP KONVERSI ============
+        item { SettingsGroupLabel(text = strings.settingsGroupConversion) }
+        item {
+            SettingsGroupCard {
+                // Kualitas Default: segmented pil modern
+                SettingsTileHeader(
+                    icon = Icons.Outlined.Tune,
+                    title = strings.qualitySectionTitle,
+                    desc = strings.qualitySectionDesc
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                QualitySegmented(
+                    selected = qualityPreset,
+                    onSelect = { idx ->
+                        qualityPreset = idx
+                        prefs.qualityPreset = idx
+                    }
+                )
                 val desc = when (qualityPreset) {
                     0 -> strings.qualityDescHigh
                     1 -> strings.qualityDescMedium
@@ -218,149 +174,104 @@ fun SettingsScreen(
                     else -> ""
                 }
                 if (desc.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = desc,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                SettingsGroupDivider()
+
+                SettingsSwitchRow(
+                    title = strings.keepNameTitle,
+                    desc = strings.keepNameDesc,
+                    checked = keepName,
+                    onCheckedChange = {
+                        keepName = it
+                        prefs.keepOriginalName = it
+                    }
+                )
+
+                SettingsGroupDivider(indent = false)
+
+                SettingsSwitchRow(
+                    title = strings.closeShareTitle,
+                    desc = strings.closeShareDesc,
+                    checked = closeShare,
+                    onCheckedChange = {
+                        closeShare = it
+                        prefs.closeAfterShare = it
+                    }
+                )
             }
         }
 
-        // --- 4. PERILAKU APLIKASI ---
+        // ============ GRUP LAINNYA ============
+        item { SettingsGroupLabel(text = strings.settingsGroupOther) }
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                
-            ) {
-                Column {
-                    // Pertahankan Nama Asli
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = strings.keepNameTitle,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = strings.keepNameDesc,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = keepName,
-                            onCheckedChange = {
-                                keepName = it
-                                prefs.keepOriginalName = it
-                            }
-                        )
-                    }
-
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
-
-                    // Tutup Otomatis Share
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = strings.closeShareTitle,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = strings.closeShareDesc,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = closeShare,
-                            onCheckedChange = {
-                                closeShare = it
-                                prefs.closeAfterShare = it
-                            }
-                        )
-                    }
-                    
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showBatteryDialogInSettings = true }
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                            Text(
-                                text = strings.batteryOptTitle,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (isBatteryOk) strings.batteryOptStatusOk else strings.batteryOptStatusRestricted,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isBatteryOk) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // --- 5. TENTANG UBAHKAN & LISENSI OPEN SOURCE ---
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
+            SettingsGroupCard {
+                // Baterai latar belakang
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showBatteryDialogInSettings = true }
+                        .padding(vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SettingsTileIcon(icon = Icons.Outlined.BatterySaver)
+                    Spacer(modifier = Modifier.width(11.dp))
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = strings.aboutSectionTitle,
+                            text = strings.batteryOptTitle,
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = strings.aboutVersion(BuildConfig.VERSION_NAME),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = if (isBatteryOk) strings.batteryOptStatusOk else strings.batteryOptStatusRestricted,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isBatteryOk) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Outlined.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+
+                SettingsGroupDivider(indent = false)
+
+                // Lisensi sumber terbuka
+                SettingsNavRow(
+                    icon = Icons.Outlined.Description,
+                    title = strings.licensesSectionTitle,
+                    desc = strings.licensesSectionSubtitle,
+                    onClick = { showLicensesDialog = true }
+                )
+
+                SettingsGroupDivider(indent = false)
+
+                // Tentang Ubahkan: keterangan penulis bisa diketuk, versi di kanan
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SettingsTileIcon(icon = Icons.Outlined.Info)
+                    Spacer(modifier = Modifier.width(11.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = strings.aboutSectionTitle,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = strings.aboutAuthor,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.clickable {
                                 runCatching {
@@ -374,58 +285,78 @@ fun SettingsScreen(
                             }
                         )
                     }
-
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    Text(
+                        text = "v" + BuildConfig.VERSION_NAME,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showLicensesDialog = true }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = strings.licensesSectionTitle,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = strings.licensesSectionSubtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
         }
     }
 
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            shape = RoundedCornerShape(20.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = {
+                Text(
+                    text = strings.languageSectionTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                Column {
+                    listOf(
+                        Pair(strings.langIndonesian, "id"),
+                        Pair(strings.langEnglish, "en")
+                    ).forEach { (label, code) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    applyLanguage(code)
+                                    showLanguageDialog = false
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedLanguage == code,
+                                onClick = {
+                                    applyLanguage(code)
+                                    showLanguageDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text(
+                        text = strings.btnClose,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        )
+    }
+
     if (showLicensesDialog) {
         OpenSourceLicensesDialog(onDismiss = { showLicensesDialog = false })
     }
-    
+
     if (showBatteryDialogInSettings) {
         BatteryOptimizationGuideDialog(
             onDismiss = { showBatteryDialogInSettings = false },
@@ -433,6 +364,278 @@ fun SettingsScreen(
                 showBatteryDialogInSettings = false
                 com.ubahkan.app.openAppBatterySettings(context)
             }
+        )
+    }
+}
+
+// ============================================================
+// KOMPONEN GRUP MODERN
+// ============================================================
+
+@Composable
+private fun SettingsGroupLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+    )
+}
+
+@Composable
+private fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun SettingsTileIcon(icon: ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(17.dp)
+        )
+    }
+}
+
+@Composable
+private fun SettingsTileHeader(
+    icon: ImageVector,
+    title: String,
+    desc: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsTileIcon(icon = icon)
+        Spacer(modifier = Modifier.width(11.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsGroupDivider(indent: Boolean = true) {
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant,
+        modifier = Modifier.padding(start = if (indent) 45.dp else 0.dp, top = 2.dp, bottom = 2.dp)
+    )
+}
+
+@Composable
+private fun ThemeTile(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val ink = MaterialTheme.colorScheme.onBackground
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) ink else MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(vertical = 13.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (selected) ink else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+            color = if (selected) ink else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun QualitySegmented(
+    selected: Int,
+    onSelect: (Int) -> Unit
+) {
+    val strings = AppStrings.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(13.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        listOf(
+            Pair(strings.qualityLow, 2),
+            Pair(strings.qualityMedium, 1),
+            Pair(strings.qualityHigh, 0),
+            Pair(strings.qualityInstant, 3)
+        ).forEach { (title, idx) ->
+            val isSelected = selected == idx
+            if (isSelected) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelect(idx) }
+                ) {
+                    Text(
+                        text = title,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelect(idx) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    title: String,
+    desc: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = UbahkanBlue,
+                checkedThumbColor = Color.White,
+                checkedBorderColor = Color.Transparent,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                uncheckedThumbColor = Color.White,
+                uncheckedBorderColor = Color.Transparent
+            )
+        )
+    }
+}
+
+@Composable
+private fun SettingsNavRow(
+    icon: ImageVector,
+    title: String,
+    desc: String? = null,
+    value: String? = null,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SettingsTileIcon(icon = icon)
+        Spacer(modifier = Modifier.width(11.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (desc != null) {
+                Text(
+                    text = desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (value != null) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+        Icon(
+            imageVector = Icons.Outlined.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+            modifier = Modifier.size(15.dp)
         )
     }
 }
@@ -540,49 +743,6 @@ private fun LicenseItemCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-// ============================================================
-// SETTINGS SECTION CARD HELPER
-// ============================================================
-
-@Composable
-private fun SettingsSectionCard(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.height(14.dp))
-            content()
         }
     }
 }

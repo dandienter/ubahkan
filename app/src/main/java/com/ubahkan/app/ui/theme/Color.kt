@@ -40,8 +40,14 @@ val UbahkanSuccess        = Color(0xFF249B69)   // Berhasil
 val UbahkanWarning        = Color(0xFFD99A27)   // Peringatan
 val UbahkanError          = Color(0xFFD94B55)   // Error / cancel
 
+// --- Token UI modern (UI 1.4.0) ---
+val UbahkanPageGrey             = Color(0xFFF5F5F1) // Latar halaman abu lembut, kartu putih melayang di atasnya
+val UbahkanSplashBackground     = Color(0xFFFCFCFA) // Latar splash (selalu putih tulang di mode terang)
+val UbahkanProgressTrack        = Color(0xFFECECE6) // Rel cincin progres mode terang
+val UbahkanProgressTrackDark    = Color(0xFF33332F) // Rel cincin progres mode gelap
+
 // --- Light Theme Surfaces ---
-val UbahkanLightBackground      = Color(0xFFFCFCFA) // Putih tulang
+val UbahkanLightBackground      = UbahkanPageGrey // Latar halaman abu lembut (UI modern)
 val UbahkanLightSurface         = Color(0xFFFFFFFF)
 val UbahkanLightSurfaceVariant  = Color(0xFFF4F4F0) // Tile ikon / permukaan redup
 val UbahkanLightTextPrimary     = Color(0xFF141414)

@@ -131,11 +131,27 @@ interface Strings {
     val toolConvertTitle: String
     val toolConvertDesc: String
     val toolsGroupMedia: String
+    val toolsViewList: String
+    val toolsViewGrid: String
+
+    // History Screen (UI 1.4.0: kartu statistik + grup hari)
+    val historyStatFiles: String
+    val historyStatSaved: String
+    val historyStatOffline: String
+    val historyGroupToday: String
+    val historyGroupYesterday: String
+    val historyGroupOlder: String
+    fun historySavedPercent(percent: Int): String
+    fun historyConversionLabel(from: String, to: String): String
 
     // Settings Screen
     val settingsTitle: String
     val settingsSubtitle: String
+    val settingsGroupAppearance: String
+    val settingsGroupConversion: String
+    val settingsGroupOther: String
     val themeSectionTitle: String
+    val themeDefaultNote: String
     val themeLight: String
     val themeDark: String
     val themeSystem: String
@@ -201,6 +217,8 @@ interface Strings {
     val titleConversionProgress: String
     val btnMinimize: String
     val convertingFileProgress: String
+    val progressPhrases: List<String>
+    fun progressFromSize(size: String): String
     val progressQueueHeader: String
     fun progressBatchFilesCompleted(done: Int, total: Int): String
     val conversionSuccess: String
@@ -431,7 +449,7 @@ object IndonesianStrings : Strings {
     override val notifBannerDesc = "Agar konversi latar belakang tidak dihentikan sistem."
     override val btnAllow = "Izinkan"
     override val batteryBannerTitle = "Lepas Pembatasan Baterai"
-    override val batteryBannerDesc = "Agar konversi video/audio panjang tidak dihentikan paksa saat layar mati atau pindah aplikasi."
+    override val batteryBannerDesc = "Agar konversi panjang tidak dihentikan paksa saat layar mati."
     override val btnLater = "Nanti"
     override val btnLearnHow = "Lihat Cara"
     override val selectNewFile = "Pilih File Baru"
@@ -512,12 +530,27 @@ object IndonesianStrings : Strings {
     override val toolExpand = "Buka"
     override val toolCollapse = "Tutup"
     override val toolConvertTitle = "Konversi Berkas"
-    override val toolConvertDesc = "Ubah format video, audio, gambar, PDF, dan dokumen lain."
+    override val toolConvertDesc = "Ubah format semua jenis berkas."
     override val toolsGroupMedia = "Gambar dan Audio"
+    override val toolsViewList = "Tampilan daftar"
+    override val toolsViewGrid = "Tampilan kotak"
+
+    override val historyStatFiles = "Berkas"
+    override val historyStatSaved = "Dihemat"
+    override val historyStatOffline = "Offline"
+    override val historyGroupToday = "Hari Ini"
+    override val historyGroupYesterday = "Kemarin"
+    override val historyGroupOlder = "Lebih Lama"
+    override fun historySavedPercent(percent: Int) = "hemat $percent%"
+    override fun historyConversionLabel(from: String, to: String) = "$from ke $to"
 
     override val settingsTitle = "Pengaturan"
     override val settingsSubtitle = "Konfigurasi tampilan dan perilaku Ubahkan."
+    override val settingsGroupAppearance = "Tampilan"
+    override val settingsGroupConversion = "Konversi"
+    override val settingsGroupOther = "Lainnya"
     override val themeSectionTitle = "Tema Aplikasi"
+    override val themeDefaultNote = "Terang adalah bawaan Ubahkan"
     override val themeLight = "Terang"
     override val themeDark = "Gelap"
     override val themeSystem = "Sistem"
@@ -525,7 +558,7 @@ object IndonesianStrings : Strings {
     override val langIndonesian = "Bahasa Indonesia"
     override val langEnglish = "English"
     override val qualitySectionTitle = "Kualitas Konversi Default"
-    override val qualitySectionDesc = "Preset bawaan yang digunakan saat membuka panel konversi. Dapat diubah per sesi."
+    override val qualitySectionDesc = "Dipakai saat panel konversi dibuka."
     override val qualityHigh = "Tinggi"
     override val qualityMedium = "Sedang"
     override val qualityLow = "Rendah"
@@ -536,15 +569,15 @@ object IndonesianStrings : Strings {
     override val qualityDescInstant = "Instan: stream copy cepat tanpa re-encode (kualitas asli, hanya untuk format yang kompatibel)."
     override val behaviorSectionTitle = "Perilaku Aplikasi"
     override val keepNameTitle = "Pertahankan Nama Asli"
-    override val keepNameDesc = "Pertahankan nama dasar file asli. Ubahkan tidak menambahkan imbuhan nama baru, kecuali diperlukan untuk menghindari nama yang bertabrakan."
+    override val keepNameDesc = "Tanpa imbuhan nama baru."
     override val closeShareTitle = "Tutup Otomatis (Share)"
-    override val closeShareDesc = "Tutup bottom sheet setelah format konversi dipilih tanpa mengarahkan pengguna ke aplikasi Ubahkan."
-    override val batteryOptTitle = "Optimasi Baterai Latar Belakang"
+    override val closeShareDesc = "Tutup panel usai memilih format."
+    override val batteryOptTitle = "Baterai Latar Belakang"
     override val batteryOptStatusOk = "Status: Tidak dibatasi (Optimal)"
     override val batteryOptStatusRestricted = "Status: Dibatasi · Ketuk untuk melihat cara mengatur"
     override val aboutSectionTitle = "Tentang Ubahkan"
     override fun aboutVersion(version: String) = "Versi $version · Offline File Converter"
-    override val aboutAuthor = "Ubahkan oleh @dandisubhani_"
+    override val aboutAuthor = "Oleh @dandisubhani_"
     override val licensesSectionTitle = "Lisensi Open Source"
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & pustaka pihak ketiga"
     override val licensesDialogIntro = "Ubahkan didistribusikan di bawah GNU General Public License v3.0 (GPL-3.0) dan menggunakan pustaka open-source berikut:"
@@ -601,6 +634,17 @@ object IndonesianStrings : Strings {
     override val titleConversionProgress = "Progres Konversi"
     override val btnMinimize = "Minimalkan"
     override val convertingFileProgress = "Mengonversi File..."
+    override val progressPhrases = listOf(
+        "Lagi dimasak, sabar ya...",
+        "Sedikit lagi, jangan ditinggal tidur...",
+        "File-mu lagi dirapikan...",
+        "Sabar, hasilnya sebentar lagi...",
+        "Lagi dipoles biar makin kinclong...",
+        "Tenang, semua dikerjakan di HP kamu...",
+        "Nyeduh kopi dulu juga boleh...",
+        "Mesin lagi ngebut, tunggu sebentar..."
+    )
+    override fun progressFromSize(size: String) = "dari $size"
     override val progressQueueHeader = "Antrean"
     override fun progressBatchFilesCompleted(done: Int, total: Int) = "$done dari $total file selesai"
     override val conversionSuccess = "Konversi Berhasil!"
@@ -689,13 +733,13 @@ object IndonesianStrings : Strings {
     override val toolsActionsTitle = "Alat Ukuran dan Potong"
     override val toolsActionsSubtitle = "Kompres ke target ukuran, potong, dan bagi video."
     override val toolCompressVideoTitle = "Kompres Video ke Target"
-    override val toolCompressVideoDesc = "Perkecil video sampai mendekati ukuran pilihan, misalnya 10 MB buat WhatsApp."
+    override val toolCompressVideoDesc = "Perkecil sampai ukuran pilihan."
     override val toolCompressImageTitle = "Kompres Gambar ke Target"
-    override val toolCompressImageDesc = "Perkecil gambar JPG sampai di bawah target KB, misalnya buat berkas lamaran."
+    override val toolCompressImageDesc = "Perkecil JPG di bawah target KB."
     override val toolTrimTitle = "Potong Video"
-    override val toolTrimDesc = "Ambil bagian video dari waktu mulai sampai waktu selesai."
+    override val toolTrimDesc = "Ambil bagian dari waktu ke waktu."
     override val toolSplitTitle = "Potong Otomatis"
-    override val toolSplitDesc = "Bagi video panjang jadi potongan rata, siap buat Status WhatsApp."
+    override val toolSplitDesc = "Bagi rata, siap buat Status WA."
     override val toolPickHint = "Ketuk untuk memilih file"
     override val toolStartButton = "Mulai"
     override val toolTargetSizeLabel = "Ukuran target"
@@ -717,53 +761,53 @@ object IndonesianStrings : Strings {
     override val toolsActionsBatch2Title = "Alat Video, PDF, dan Audio"
     override val toolsActionsBatch2Subtitle = "Gabung, pisah, subtitle, crop, dan lainnya."
     override val toolMergeVideoTitle = "Gabung Video"
-    override val toolMergeVideoDesc = "Sambung dua video atau lebih jadi satu, sesuai urutan pilihan."
+    override val toolMergeVideoDesc = "Sambung klip jadi satu berkas."
     override fun toolSelectedFilesInfo(count: Int) = "$count berkas terpilih, urutan sesuai pilihan."
     override val toolErrNeedTwoFiles = "Pilih minimal dua berkas untuk digabung."
     override val engineSplittingPdf = "Memisahkan halaman PDF..."
     override fun engineSplittingPdfPage(current: Int, total: Int) = "Memisahkan halaman $current dari $total..."
     override val engineErrPdfRangeInvalid = "Rentang halaman tidak valid."
     override val toolSplitPdfTitle = "Pisah PDF"
-    override val toolSplitPdfDesc = "Jadikan tiap halaman PDF sebagai berkas PDF sendiri."
+    override val toolSplitPdfDesc = "Satu halaman jadi satu berkas PDF."
     override val toolPdfRangeLabel = "Rentang halaman"
     override val toolPdfRangeHint = "Kosongkan untuk semua halaman, atau isi misalnya 1-3 atau 1,3,5."
     override val toolErrNotPdf = "File terpilih bukan PDF."
     override val engineMergingPdfs = "Menggabungkan PDF..."
     override fun engineMergingPdfPage(current: Int, total: Int) = "Menggabungkan halaman $current dari $total..."
     override val toolMergePdfTitle = "Gabung PDF"
-    override val toolMergePdfDesc = "Sambung dua PDF atau lebih jadi satu, sesuai urutan pilihan."
+    override val toolMergePdfDesc = "Sambung PDF jadi satu berkas."
     override val engineBurningSubtitles = "Membakar subtitle ke video..."
     override val engineErrSubtitleMissing = "Berkas subtitle tidak ditemukan."
     override val toolHardsubTitle = "Bakar Subtitle (Hardsub)"
-    override val toolHardsubDesc = "Tempel subtitle .srt permanen ke video."
+    override val toolHardsubDesc = "Tempel .srt permanen ke video."
     override val toolSubtitleFileLabel = "Berkas subtitle (.srt)"
     override val toolPickCompanionButton = "Pilih berkas"
     override val toolErrCompanionMissing = "Pilih berkas pendamping dulu."
     override val toolErrSubtitleExt = "Berkas subtitle harus berekstensi .srt."
     override val engineCroppingVideo = "Memotong bingkai video..."
     override val toolCropTitle = "Crop Rasio Video"
-    override val toolCropDesc = "Potong bingkai video ke rasio 9:16, 1:1, atau 16:9 dari tengah."
+    override val toolCropDesc = "Rasio 9:16, 1:1, atau 16:9."
     override val toolCropRatioLabel = "Rasio bingkai"
     override val engineResizingVideo = "Mengubah resolusi video..."
     override val toolResizeTitle = "Ubah Resolusi Video"
-    override val toolResizeDesc = "Turunkan resolusi video ke 1080p, 720p, 480p, atau 360p."
+    override val toolResizeDesc = "Turunkan ke 720p, 480p, 360p."
     override val toolResizeLabel = "Resolusi target"
     override val engineMutingVideo = "Membisukan video..."
     override val toolMuteTitle = "Bisukan Video"
-    override val toolMuteDesc = "Hapus jalur audio dari video, gambar disalin apa adanya."
+    override val toolMuteDesc = "Hapus jalur audio dari video."
     override val engineReplacingAudio = "Mengganti audio video..."
     override val engineErrAudioMissing = "Berkas audio pengganti tidak ditemukan."
     override val toolReplaceAudioTitle = "Ganti Audio Video"
-    override val toolReplaceAudioDesc = "Timpa suara video dengan berkas audio lain."
+    override val toolReplaceAudioDesc = "Timpa suara video dengan audio lain."
     override val toolAudioFileLabel = "Berkas audio pengganti"
     override val engineConvertingHeic = "Mengubah HEIC menjadi JPG..."
     override val engineErrHeicUnsupported = "Konversi HEIC membutuhkan Android 9 atau lebih baru."
     override fun engineErrHeicDecode(msg: String) = "Gagal membaca berkas HEIC: $msg"
     override val toolHeicTitle = "HEIC ke JPG"
-    override val toolHeicDesc = "Ubah foto HEIC atau HEIF dari kamera menjadi JPG."
+    override val toolHeicDesc = "Foto HEIC menjadi JPG universal."
     override val toolErrNotHeic = "File terpilih bukan HEIC atau HEIF."
     override val toolInfoTitle = "Info Berkas"
-    override val toolInfoDesc = "Lihat format, durasi, resolusi, codec, dan bitrate sebuah berkas media."
+    override val toolInfoDesc = "Lihat ukuran dan format berkas."
     override val infoFormatLabel = "Format"
     override val infoDurationLabel = "Durasi"
     override val infoSizeLabel = "Ukuran"
@@ -775,7 +819,7 @@ object IndonesianStrings : Strings {
     override val infoFailed = "Tidak dapat membaca info berkas ini."
     override val engineNormalizingVolume = "Menormalkan volume..."
     override val toolNormalizeTitle = "Normalisasi Volume"
-    override val toolNormalizeDesc = "Samakan keras suara video atau audio dengan loudnorm satu pass."
+    override val toolNormalizeDesc = "Samakan keras suara video atau audio."
     override val toolErrNotMedia = "File terpilih bukan video atau audio."
 
     override val validatorFileNotFound = "Berkas output tidak ditemukan di sistem penyimpanan."
@@ -827,7 +871,7 @@ object EnglishStrings : Strings {
     override val notifBannerDesc = "Keeps background conversions running reliably."
     override val btnAllow = "Allow"
     override val batteryBannerTitle = "Disable Battery Restrictions"
-    override val batteryBannerDesc = "Prevents long video/audio conversions from stopping when the screen turns off."
+    override val batteryBannerDesc = "So long conversions are not stopped when the screen turns off."
     override val btnLater = "Later"
     override val btnLearnHow = "Learn How"
     override val selectNewFile = "Select New File"
@@ -908,12 +952,27 @@ object EnglishStrings : Strings {
     override val toolExpand = "Expand"
     override val toolCollapse = "Collapse"
     override val toolConvertTitle = "Convert File"
-    override val toolConvertDesc = "Change the format of videos, audio, images, PDFs, and other documents."
+    override val toolConvertDesc = "Change any file format."
     override val toolsGroupMedia = "Image and Audio"
+    override val toolsViewList = "List view"
+    override val toolsViewGrid = "Grid view"
+
+    override val historyStatFiles = "Files"
+    override val historyStatSaved = "Saved"
+    override val historyStatOffline = "Offline"
+    override val historyGroupToday = "Today"
+    override val historyGroupYesterday = "Yesterday"
+    override val historyGroupOlder = "Older"
+    override fun historySavedPercent(percent: Int) = "saved $percent%"
+    override fun historyConversionLabel(from: String, to: String) = "$from to $to"
 
     override val settingsTitle = "Settings"
     override val settingsSubtitle = "Configure Ubahkan display and behavior."
+    override val settingsGroupAppearance = "Appearance"
+    override val settingsGroupConversion = "Conversion"
+    override val settingsGroupOther = "Other"
     override val themeSectionTitle = "App Theme"
+    override val themeDefaultNote = "Light is the Ubahkan default"
     override val themeLight = "Light"
     override val themeDark = "Dark"
     override val themeSystem = "System"
@@ -921,7 +980,7 @@ object EnglishStrings : Strings {
     override val langIndonesian = "Bahasa Indonesia"
     override val langEnglish = "English"
     override val qualitySectionTitle = "Default Conversion Quality"
-    override val qualitySectionDesc = "Default preset used when opening the conversion sheet. Can be adjusted per session."
+    override val qualitySectionDesc = "Used when the conversion sheet opens."
     override val qualityHigh = "High"
     override val qualityMedium = "Medium"
     override val qualityLow = "Low"
@@ -932,15 +991,15 @@ object EnglishStrings : Strings {
     override val qualityDescInstant = "Instant: fast stream copy without re-encoding (original quality, compatible formats only)."
     override val behaviorSectionTitle = "App Behavior"
     override val keepNameTitle = "Keep Original Filename"
-    override val keepNameDesc = "Preserve the original base filename. Ubahkan does not add extra prefixes or suffixes unless needed to prevent collisions."
+    override val keepNameDesc = "No new name suffix added."
     override val closeShareTitle = "Auto-Close (Share)"
-    override val closeShareDesc = "Close the sheet after choosing the target format without opening Ubahkan's main screen."
-    override val batteryOptTitle = "Background Battery Optimization"
+    override val closeShareDesc = "Close the sheet after picking a format."
+    override val batteryOptTitle = "Background Battery"
     override val batteryOptStatusOk = "Status: Unrestricted (Optimal)"
     override val batteryOptStatusRestricted = "Status: Restricted · Tap to see instructions"
     override val aboutSectionTitle = "About Ubahkan"
     override fun aboutVersion(version: String) = "Version $version · Offline File Converter"
-    override val aboutAuthor = "Ubahkan by @dandisubhani_"
+    override val aboutAuthor = "By @dandisubhani_"
     override val licensesSectionTitle = "Open Source Licenses"
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & third-party libraries"
     override val licensesDialogIntro = "Ubahkan is distributed under the GNU General Public License v3.0 (GPL-3.0) and uses the following open-source libraries:"
@@ -997,6 +1056,17 @@ object EnglishStrings : Strings {
     override val titleConversionProgress = "Conversion Progress"
     override val btnMinimize = "Minimize"
     override val convertingFileProgress = "Converting Files..."
+    override val progressPhrases = listOf(
+        "Cooking it up, hang tight...",
+        "Almost there, no napping yet...",
+        "Tidying up your file...",
+        "Patience, it is nearly done...",
+        "Polishing it to a shine...",
+        "Relax, it all happens on your phone...",
+        "Plenty of time for a coffee...",
+        "The engine is speeding, one moment..."
+    )
+    override fun progressFromSize(size: String) = "of $size"
     override val progressQueueHeader = "Queue"
     override fun progressBatchFilesCompleted(done: Int, total: Int) = "$done of $total files completed"
     override val conversionSuccess = "Conversion Successful!"
@@ -1085,13 +1155,13 @@ object EnglishStrings : Strings {
     override val toolsActionsTitle = "Size and Cut Tools"
     override val toolsActionsSubtitle = "Compress to a target size, trim, and split videos."
     override val toolCompressVideoTitle = "Compress Video to Size"
-    override val toolCompressVideoDesc = "Shrink a video to around a chosen size, for example 10 MB for WhatsApp."
+    override val toolCompressVideoDesc = "Shrink to a chosen target size."
     override val toolCompressImageTitle = "Compress Image to Size"
-    override val toolCompressImageDesc = "Shrink a JPG image to under a target KB, for example for job applications."
+    override val toolCompressImageDesc = "Shrink JPG under a target KB."
     override val toolTrimTitle = "Trim Video"
-    override val toolTrimDesc = "Cut a section of a video from a start time to an end time."
+    override val toolTrimDesc = "Cut a section from time to time."
     override val toolSplitTitle = "Auto Split"
-    override val toolSplitDesc = "Split a long video into even parts, ready for WhatsApp Status."
+    override val toolSplitDesc = "Even parts, ready for WA Status."
     override val toolPickHint = "Tap to pick a file"
     override val toolStartButton = "Start"
     override val toolTargetSizeLabel = "Target size"
@@ -1113,53 +1183,53 @@ object EnglishStrings : Strings {
     override val toolsActionsBatch2Title = "Video, PDF, and Audio Tools"
     override val toolsActionsBatch2Subtitle = "Merge, split, subtitles, crop, and more."
     override val toolMergeVideoTitle = "Merge Videos"
-    override val toolMergeVideoDesc = "Join two or more videos into one, in the order you picked them."
+    override val toolMergeVideoDesc = "Join clips into one file."
     override fun toolSelectedFilesInfo(count: Int) = "$count files selected, in picking order."
     override val toolErrNeedTwoFiles = "Pick at least two files to merge."
     override val engineSplittingPdf = "Splitting PDF pages..."
     override fun engineSplittingPdfPage(current: Int, total: Int) = "Splitting page $current of $total..."
     override val engineErrPdfRangeInvalid = "Invalid page range."
     override val toolSplitPdfTitle = "Split PDF"
-    override val toolSplitPdfDesc = "Turn each PDF page into its own PDF file."
+    override val toolSplitPdfDesc = "One page becomes its own PDF."
     override val toolPdfRangeLabel = "Page range"
     override val toolPdfRangeHint = "Leave empty for all pages, or enter e.g. 1-3 or 1,3,5."
     override val toolErrNotPdf = "The selected file is not a PDF."
     override val engineMergingPdfs = "Merging PDFs..."
     override fun engineMergingPdfPage(current: Int, total: Int) = "Merging page $current of $total..."
     override val toolMergePdfTitle = "Merge PDFs"
-    override val toolMergePdfDesc = "Join two or more PDFs into one, in the order you picked them."
+    override val toolMergePdfDesc = "Join PDFs into one file."
     override val engineBurningSubtitles = "Burning subtitles into video..."
     override val engineErrSubtitleMissing = "Subtitle file not found."
     override val toolHardsubTitle = "Burn Subtitles (Hardsub)"
-    override val toolHardsubDesc = "Permanently burn .srt subtitles into a video."
+    override val toolHardsubDesc = "Burn .srt permanently into video."
     override val toolSubtitleFileLabel = "Subtitle file (.srt)"
     override val toolPickCompanionButton = "Pick file"
     override val toolErrCompanionMissing = "Pick the companion file first."
     override val toolErrSubtitleExt = "The subtitle file must have the .srt extension."
     override val engineCroppingVideo = "Cropping video frame..."
     override val toolCropTitle = "Crop Video Ratio"
-    override val toolCropDesc = "Crop the video frame to 9:16, 1:1, or 16:9 from the center."
+    override val toolCropDesc = "Ratios 9:16, 1:1, or 16:9."
     override val toolCropRatioLabel = "Frame ratio"
     override val engineResizingVideo = "Resizing video..."
     override val toolResizeTitle = "Resize Video"
-    override val toolResizeDesc = "Lower a video resolution to 1080p, 720p, 480p, or 360p."
+    override val toolResizeDesc = "Lower to 720p, 480p, 360p."
     override val toolResizeLabel = "Target resolution"
     override val engineMutingVideo = "Muting video..."
     override val toolMuteTitle = "Mute Video"
-    override val toolMuteDesc = "Remove the audio track from a video, picture copied as is."
+    override val toolMuteDesc = "Remove the audio track."
     override val engineReplacingAudio = "Replacing video audio..."
     override val engineErrAudioMissing = "Replacement audio file not found."
     override val toolReplaceAudioTitle = "Replace Video Audio"
-    override val toolReplaceAudioDesc = "Overwrite a video soundtrack with another audio file."
+    override val toolReplaceAudioDesc = "Replace the video soundtrack."
     override val toolAudioFileLabel = "Replacement audio file"
     override val engineConvertingHeic = "Converting HEIC to JPG..."
     override val engineErrHeicUnsupported = "HEIC conversion requires Android 9 or newer."
     override fun engineErrHeicDecode(msg: String) = "Failed to read the HEIC file: $msg"
     override val toolHeicTitle = "HEIC to JPG"
-    override val toolHeicDesc = "Convert HEIC or HEIF camera photos to JPG."
+    override val toolHeicDesc = "HEIC photos become universal JPG."
     override val toolErrNotHeic = "The selected file is not HEIC or HEIF."
     override val toolInfoTitle = "File Info"
-    override val toolInfoDesc = "See the format, duration, resolution, codec, and bitrate of a media file."
+    override val toolInfoDesc = "See size, format, and file details."
     override val infoFormatLabel = "Format"
     override val infoDurationLabel = "Duration"
     override val infoSizeLabel = "Size"
@@ -1171,7 +1241,7 @@ object EnglishStrings : Strings {
     override val infoFailed = "Could not read info for this file."
     override val engineNormalizingVolume = "Normalizing volume..."
     override val toolNormalizeTitle = "Normalize Volume"
-    override val toolNormalizeDesc = "Even out a video or audio loudness with one-pass loudnorm."
+    override val toolNormalizeDesc = "Even out video or audio loudness."
     override val toolErrNotMedia = "The selected file is not a video or audio file."
 
     override val validatorFileNotFound = "Output file not found in storage."

@@ -16,12 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.ToolOperation
 import com.ubahkan.app.ui.components.StaggerReveal
-import com.ubahkan.app.ui.components.UbahkanScreenHeader
+import com.ubahkan.app.ui.components.ToolGridCard
 import com.ubahkan.app.ui.components.UbahkanSectionLabel
 
 /*
@@ -53,6 +54,10 @@ fun ToolsScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { com.ubahkan.app.UbahkanPrefs(context) }
+    var viewMode by remember { mutableStateOf(prefs.toolsViewMode) } // 0: List, 1: Grid
+    val gridMode = viewMode == 1
 
     val videoTools = listOf(
         ToolEntry(ToolOperation.COMPRESS_VIDEO, "video/*", strings.toolCompressVideoTitle, strings.toolCompressVideoDesc, Icons.Outlined.Compress),
@@ -86,24 +91,49 @@ fun ToolsScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header
+        // Header + saklar tampilan List/Grid (persisten di preferensi)
         item {
-            UbahkanScreenHeader(
-                title = strings.toolsTitle,
-                subtitle = strings.toolsSubtitle
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = strings.toolsTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = strings.toolsSubtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                ToolsViewToggle(
+                    gridMode = gridMode,
+                    onSelect = { grid ->
+                        viewMode = if (grid) 1 else 0
+                        prefs.toolsViewMode = viewMode
+                    }
+                )
+            }
         }
 
         // Konversi berkas biasa (operasi CONVERT)
         item {
             StaggerReveal(index = 0) {
-                ToolRow(
-                    title = strings.toolConvertTitle,
-                    description = strings.toolConvertDesc,
-                    icon = Icons.Outlined.SwapHoriz,
-                    onClick = onConvertClick,
-                    showDivider = false
-                )
+                if (gridMode) {
+                    ToolConvertCard(onClick = onConvertClick)
+                } else {
+                    ToolRow(
+                        title = strings.toolConvertTitle,
+                        description = strings.toolConvertDesc,
+                        icon = Icons.Outlined.SwapHoriz,
+                        onClick = onConvertClick,
+                        showDivider = false
+                    )
+                }
             }
         }
 
@@ -111,16 +141,20 @@ fun ToolsScreen(
         item {
             UbahkanSectionLabel(text = strings.categoryVideo)
         }
-        items(videoTools.size, key = { "video_${videoTools[it].operation}" }) { idx ->
-            val tool = videoTools[idx]
-            StaggerReveal(index = 1 + idx) {
-                ToolRow(
-                    title = tool.title,
-                    description = tool.description,
-                    icon = tool.icon,
-                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
-                    showDivider = idx < videoTools.lastIndex
-                )
+        if (gridMode) {
+            item { ToolsGridGroup(tools = videoTools, baseIndex = 1, onPickFileForTool = onPickFileForTool) }
+        } else {
+            items(videoTools.size, key = { "video_${videoTools[it].operation}" }) { idx ->
+                val tool = videoTools[idx]
+                StaggerReveal(index = 1 + idx) {
+                    ToolRow(
+                        title = tool.title,
+                        description = tool.description,
+                        icon = tool.icon,
+                        onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                        showDivider = idx < videoTools.lastIndex
+                    )
+                }
             }
         }
 
@@ -131,16 +165,20 @@ fun ToolsScreen(
                 modifier = Modifier.padding(top = 6.dp)
             )
         }
-        items(documentTools.size, key = { "doc_${documentTools[it].operation}" }) { idx ->
-            val tool = documentTools[idx]
-            StaggerReveal(index = 2 + idx) {
-                ToolRow(
-                    title = tool.title,
-                    description = tool.description,
-                    icon = tool.icon,
-                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
-                    showDivider = idx < documentTools.lastIndex
-                )
+        if (gridMode) {
+            item { ToolsGridGroup(tools = documentTools, baseIndex = 2, onPickFileForTool = onPickFileForTool) }
+        } else {
+            items(documentTools.size, key = { "doc_${documentTools[it].operation}" }) { idx ->
+                val tool = documentTools[idx]
+                StaggerReveal(index = 2 + idx) {
+                    ToolRow(
+                        title = tool.title,
+                        description = tool.description,
+                        icon = tool.icon,
+                        onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                        showDivider = idx < documentTools.lastIndex
+                    )
+                }
             }
         }
 
@@ -151,16 +189,20 @@ fun ToolsScreen(
                 modifier = Modifier.padding(top = 6.dp)
             )
         }
-        items(mediaTools.size, key = { "media_${mediaTools[it].operation}" }) { idx ->
-            val tool = mediaTools[idx]
-            StaggerReveal(index = 3 + idx) {
-                ToolRow(
-                    title = tool.title,
-                    description = tool.description,
-                    icon = tool.icon,
-                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
-                    showDivider = idx < mediaTools.lastIndex
-                )
+        if (gridMode) {
+            item { ToolsGridGroup(tools = mediaTools, baseIndex = 3, onPickFileForTool = onPickFileForTool) }
+        } else {
+            items(mediaTools.size, key = { "media_${mediaTools[it].operation}" }) { idx ->
+                val tool = mediaTools[idx]
+                StaggerReveal(index = 3 + idx) {
+                    ToolRow(
+                        title = tool.title,
+                        description = tool.description,
+                        icon = tool.icon,
+                        onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                        showDivider = idx < mediaTools.lastIndex
+                    )
+                }
             }
         }
 
@@ -268,6 +310,135 @@ fun ToolsScreen(
                 detail = strings.toolFormatDetail,
                 icon = Icons.Default.Extension
             )
+        }
+    }
+}
+
+// Saklar tampilan List/Grid: pil abu berisi dua ikon Outlined,
+// pilihan aktif berupa pil putih kecil (gaya mockup UI 1.4.0).
+@Composable
+private fun ToolsViewToggle(
+    gridMode: Boolean,
+    onSelect: (Boolean) -> Unit
+) {
+    val strings = AppStrings.current
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        listOf(false, true).forEach { grid ->
+            val selected = gridMode == grid
+            Surface(
+                shape = RoundedCornerShape(7.dp),
+                color = if (selected) MaterialTheme.colorScheme.surface else androidx.compose.ui.graphics.Color.Transparent,
+                shadowElevation = if (selected) 1.dp else 0.dp,
+                modifier = Modifier.clickable { onSelect(grid) }
+            ) {
+                Box(
+                    modifier = Modifier.size(width = 34.dp, height = 26.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (grid) Icons.Outlined.GridView else Icons.Outlined.ViewList,
+                        contentDescription = if (grid) strings.toolsViewGrid else strings.toolsViewList,
+                        tint = if (selected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Kartu Konversi Berkas untuk mode Grid: kartu putih selebar layar
+// dengan ubin ikon biru pucat, judul, deskripsi, dan chevron.
+@Composable
+private fun ToolConvertCard(onClick: () -> Unit) {
+    val strings = AppStrings.current
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.SwapHoriz,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(17.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(11.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = strings.toolConvertTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = strings.toolConvertDesc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                modifier = Modifier.size(15.dp)
+            )
+        }
+    }
+}
+
+// Satu grup alat dalam mode Grid: kartu 2 kolom setinggi seragam.
+@Composable
+private fun ToolsGridGroup(
+    tools: List<ToolEntry>,
+    baseIndex: Int,
+    onPickFileForTool: (ToolOperation, String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tools.chunked(2).forEachIndexed { rowIndex, rowTools ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rowTools.forEachIndexed { colIndex, tool ->
+                    StaggerReveal(
+                        index = baseIndex + rowIndex * 2 + colIndex,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        ToolGridCard(
+                            title = tool.title,
+                            description = tool.description,
+                            icon = tool.icon,
+                            onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                if (rowTools.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }

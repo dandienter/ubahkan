@@ -29,7 +29,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -442,7 +445,10 @@ fun FileHistoryItemCard(
     onClick: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    conversionLabel: String? = null,
+    savedPercent: Int? = null,
+    showDivider: Boolean = true
 ) {
     val strings = AppStrings.current
     var menuExpanded by remember { mutableStateOf(false) }
@@ -562,11 +568,36 @@ fun FileHistoryItemCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Text(
-                    text = "$ext · ${formatFileSize(file.length())}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (conversionLabel != null) {
+                    // Meta hasil konversi sesi ini: label konversi + info hemat biru
+                    val accentColor = MaterialTheme.colorScheme.primary
+                    val metaText = remember(conversionLabel, savedPercent, file.length()) {
+                        buildAnnotatedString {
+                            append(conversionLabel)
+                            append(" · ")
+                            append(formatFileSize(file.length()))
+                            if (savedPercent != null) {
+                                append(" - ")
+                                withStyle(SpanStyle(color = accentColor)) {
+                                    append(strings.historySavedPercent(savedPercent))
+                                }
+                            }
+                        }
+                    }
+                    Text(
+                        text = metaText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else {
+                    Text(
+                        text = "$ext · ${formatFileSize(file.length())}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Text(
@@ -633,7 +664,9 @@ fun FileHistoryItemCard(
                 }
             }
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        if (showDivider) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
     }
 }
 
@@ -841,6 +874,118 @@ fun UbahkanCategoryFilter(
                     borderWidth = 1.dp,
                     selectedBorderWidth = 1.dp
                 )
+            )
+        }
+    }
+}
+
+// --------------------------------------------------
+// TEXT TABS  -  tab teks bergaris bawah (UI 1.4.0)
+// Dipakai Beranda (saring alat populer) dan Riwayat (saring
+// kategori): tab aktif teks tinta + garis bawah tinta 2dp,
+// tanpa chip yang terpotong di tepi layar.
+// --------------------------------------------------
+
+@Composable
+fun UbahkanTextTabs(
+    categories: List<CategoryFilterItem>,
+    selectedCategoryId: String,
+    onCategorySelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.align(Alignment.BottomStart)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            categories.forEach { categoryItem ->
+                val isSelected = selectedCategoryId == categoryItem.id
+                Column(
+                    modifier = Modifier
+                        .clickable { onCategorySelected(categoryItem.id) }
+                        .padding(top = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = categoryItem.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                        color = if (isSelected) MaterialTheme.colorScheme.onBackground
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.onBackground
+                                else Color.Transparent
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+// --------------------------------------------------
+// TOOL GRID CARD  -  kartu alat mode kotak (UI 1.4.0)
+// Kartu putih melayang radius 20dp, tinggi seragam 128dp,
+// ikon di ubin biru pucat, judul dan deskripsi maks 2 baris.
+// Dipakai grid Alat Populer di Beranda dan mode Grid tab Alat.
+// --------------------------------------------------
+
+@Composable
+fun ToolGridCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .height(128.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
+    ) {
+        Column(modifier = Modifier.padding(13.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(9.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

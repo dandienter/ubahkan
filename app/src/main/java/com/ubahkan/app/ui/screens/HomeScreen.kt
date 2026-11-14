@@ -1,15 +1,12 @@
 package com.ubahkan.app.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -22,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,8 +31,9 @@ import com.ubahkan.app.ui.components.CategoryFilterItem
 import com.ubahkan.app.ui.components.ConversionBanner
 import com.ubahkan.app.ui.components.ErrorCard
 import com.ubahkan.app.ui.components.StaggerReveal
-import com.ubahkan.app.ui.components.UbahkanCategoryFilter
+import com.ubahkan.app.ui.components.ToolGridCard
 import com.ubahkan.app.ui.components.UbahkanSectionLabel
+import com.ubahkan.app.ui.components.UbahkanTextTabs
 import com.ubahkan.app.ui.components.rememberPressScale
 import kotlinx.coroutines.delay
 
@@ -113,7 +110,7 @@ fun HomeScreen(
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(top = 10.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // --- 0. HERO MINIMALIS (sesuai mockup) ---
         item {
@@ -183,12 +180,13 @@ fun HomeScreen(
 
         if (!batteryUnrestricted && !batteryBannerDismissed) {
             item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                // Banner baterai gaya modern: kartu putih melayang, ikon di
+                // ubin biru pucat, tombol Lihat Cara hitam kecil.
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier
@@ -197,23 +195,31 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.BatteryAlert,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.BatteryAlert,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(11.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = strings.batteryBannerTitle,
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = strings.batteryBannerDesc,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.85f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -229,12 +235,23 @@ fun HomeScreen(
                                     prefs.dismissBatteryWarning = true
                                 }
                             ) {
-                                Text(strings.btnLater, fontSize = 12.sp)
+                                Text(
+                                    strings.btnLater,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = { showBatteryGuideDialog = true },
-                                shape = RoundedCornerShape(10.dp)
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(36.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    contentColor = MaterialTheme.colorScheme.background
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                             ) {
                                 Text(strings.btnLearnHow, fontSize = 12.sp)
                             }
@@ -244,11 +261,11 @@ fun HomeScreen(
             }
         }
 
-        // --- 4. CHIP KATEGORI + ALAT POPULER ---
+        // --- 4. TAB KATEGORI + ALAT POPULER ---
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 StaggerReveal(index = 1) {
-                    UbahkanCategoryFilter(
+                    UbahkanTextTabs(
                         categories = toolCategories,
                         selectedCategoryId = selectedToolCategory,
                         onCategorySelected = { selectedToolCategory = it }
@@ -401,9 +418,12 @@ private fun PopularToolsGrid(
                             index = 2 + rowIndex * 2 + colIndex,
                             modifier = Modifier.weight(1f)
                         ) {
-                            PopularToolCard(
-                                tool = tool,
-                                onClick = { onToolClick(tool.operation, tool.mimeType) }
+                            ToolGridCard(
+                                title = tool.title,
+                                description = tool.description,
+                                icon = tool.icon,
+                                onClick = { onToolClick(tool.operation, tool.mimeType) },
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
@@ -412,53 +432,6 @@ private fun PopularToolsGrid(
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun PopularToolCard(
-    tool: PopularTool,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-    ) {
-        Column(modifier = Modifier.padding(13.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = tool.icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Spacer(modifier = Modifier.height(9.dp))
-            Text(
-                text = tool.title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = tool.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

@@ -1,9 +1,14 @@
 package com.ubahkan.app.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,7 +44,12 @@ import com.ubahkan.app.sharePartsToWhatsAppStatus
 import com.ubahkan.app.ui.components.UbahkanEaseOut
 import com.ubahkan.app.ui.components.UbahkanLogo
 import com.ubahkan.app.ui.components.UbahkanSectionLabel
+import com.ubahkan.app.ui.components.formatFileSize
 import com.ubahkan.app.ui.components.rememberPressScale
+import com.ubahkan.app.ui.theme.UbahkanBlue
+import com.ubahkan.app.ui.theme.UbahkanDarkBackground
+import com.ubahkan.app.ui.theme.UbahkanProgressTrack
+import com.ubahkan.app.ui.theme.UbahkanProgressTrackDark
 import kotlin.math.roundToInt
 import java.io.File
 
@@ -52,6 +62,7 @@ fun ProgressScreen(
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
+    val context = LocalContext.current
     val queueState by ConversionQueueManager.queueState.collectAsState()
 
     val totalCount = queueState.size
@@ -150,15 +161,12 @@ fun ProgressScreen(
                     label = "progressAnim"
                 )
 
-                // Visual Transformation: Source File → Ubahkan Ribbon → Target File
-                FileTransformationVisual(
-                    sourceExt = currentJob?.originalFileName?.substringAfterLast('.', "")?.uppercase() ?: "FILE",
-                    targetExt = currentJob?.targetFormat?.uppercase() ?: "OUTPUT"
-                )
+                // Cincin progres besar: persen Regular di tengah cincin
+                // biru, teks tahap di atas, frasa acak berganti di bawah.
+                val inputSize = remember(currentJob?.id) {
+                    currentJob?.let { com.ubahkan.app.getFileSizeFromUri(context, it.inputUri) } ?: 0L
+                }
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Progress Info
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -170,32 +178,13 @@ fun ProgressScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Text(
-                        text = "${(animatedProgress * 100).roundToInt()}%",
-                        style = MaterialTheme.typography.displayLarge.copy(fontSize = 44.sp),
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurface
+                    ProgressRing(
+                        progress = animatedProgress,
+                        centerText = "${(animatedProgress * 100).roundToInt()}%",
+                        subText = if (inputSize > 0) {
+                            strings.progressFromSize(formatFileSize(inputSize))
+                        } else null
                     )
-
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    if (totalCount > 1) {
-                        Text(
-                            text = strings.progressBatchFilesCompleted(completedCount, totalCount),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
 
                     if (currentJob != null) {
                         Text(
@@ -205,8 +194,30 @@ fun ProgressScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        val stageMessage = currentJob.progressMessage
+                        if (stageMessage.isNotBlank()) {
+                            Text(
+                                text = stageMessage,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    RandomProgressPhrase(phrases = strings.progressPhrases)
+
+                    if (totalCount > 1) {
+                        Text(
+                            text = strings.progressBatchFilesCompleted(completedCount, totalCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Antrean pekerjaan: baris ikon + nama + status (gaya mockup)
                 Column(
@@ -409,90 +420,98 @@ private fun WhatsAppStatusShareButton(files: List<File>) {
 }
 
 @Composable
-private fun FileTransformationVisual(
-    sourceExt: String,
-    targetExt: String
+private fun ProgressRing(
+    progress: Float,
+    centerText: String,
+    subText: String?
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "transformPulse")
-    val floatOffset by infiniteTransition.animateFloat(
-        initialValue = -6f,
-        targetValue = 6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "float"
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+    val isDark = MaterialTheme.colorScheme.background == UbahkanDarkBackground
+    val trackColor = if (isDark) UbahkanProgressTrackDark else UbahkanProgressTrack
+    Box(
+        modifier = Modifier.size(180.dp),
+        contentAlignment = Alignment.Center
     ) {
-        // Source File Box
-        Surface(
-            modifier = Modifier
-                .size(76.dp)
-                .offset(y = floatOffset.dp),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val stroke = 7.dp.toPx()
+            val inset = stroke / 2f
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke)
+            val topLeft = androidx.compose.ui.geometry.Offset(inset, inset)
+            drawArc(
+                color = trackColor,
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                    width = stroke,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = sourceExt,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        // Center Ubahkan Logo
-        UbahkanLogo(size = 56.dp)
-
-        // Target File Box
-        Surface(
-            modifier = Modifier
-                .size(76.dp)
-                .offset(y = (-floatOffset).dp),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f))
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = targetExt,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            if (progress > 0f) {
+                drawArc(
+                    color = UbahkanBlue,
+                    startAngle = -90f,
+                    sweepAngle = progress.coerceIn(0f, 1f) * 360f,
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = arcSize,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                        width = stroke,
+                        cap = androidx.compose.ui.graphics.StrokeCap.Round
+                    )
                 )
             }
         }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = centerText,
+                style = MaterialTheme.typography.displayLarge.copy(fontSize = 40.sp),
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (subText != null) {
+                Text(
+                    text = subText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// Frasa santai berganti tiap sekitar 2,8 detik dengan fade,
+// urutan acak tanpa mengulang frasa yang sama berurutan.
+@Composable
+private fun RandomProgressPhrase(phrases: List<String>) {
+    if (phrases.isEmpty()) return
+    var index by remember { mutableStateOf(phrases.indices.random()) }
+    LaunchedEffect(phrases) {
+        while (true) {
+            kotlinx.coroutines.delay(2800)
+            var next = phrases.indices.random()
+            if (phrases.size > 1) {
+                while (next == index) {
+                    next = phrases.indices.random()
+                }
+            }
+            index = next
+        }
+    }
+    AnimatedContent(
+        targetState = index,
+        transitionSpec = {
+            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+        },
+        label = "progressPhrase"
+    ) { i ->
+        Text(
+            text = "\"${phrases.getOrElse(i) { "" }}\"",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

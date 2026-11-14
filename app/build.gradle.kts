@@ -18,8 +18,21 @@ android {
         applicationId = "com.ubahkan.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.4.0"
+
+        // Tekan ukuran APK: hanya arm64-v8a. Dukungan 32-bit
+        // (armeabi-v7a) dan x86/x86_64 dilepas sejak 1.4.0.
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // .so disimpan terkompresi di APK agar unduhan lebih kecil
+            useLegacyPackaging = true
+        }
     }
 
     buildFeatures {
@@ -45,6 +58,17 @@ android {
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            // CI membangun assembleDebug: minify + shrink resources aktif
+            // di sini agar artefak debug ikut ramping. Aturan keep aman
+            // untuk FFmpegKit dan Compose ada di proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

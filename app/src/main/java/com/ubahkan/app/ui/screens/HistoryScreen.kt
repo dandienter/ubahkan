@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
@@ -29,9 +28,11 @@ import com.ubahkan.app.core.FileCategoryManager
 import com.ubahkan.app.core.JobStatus
 import com.ubahkan.app.ui.components.CategoryFilterItem
 import com.ubahkan.app.ui.components.FileHistoryItemCard
-import com.ubahkan.app.ui.components.UbahkanCategoryFilter
 import com.ubahkan.app.ui.components.UbahkanLogo
 import com.ubahkan.app.ui.components.UbahkanScreenHeader
+import com.ubahkan.app.ui.components.UbahkanSectionLabel
+import com.ubahkan.app.ui.components.UbahkanTextTabs
+import com.ubahkan.app.ui.components.formatFileSize
 import java.io.File
 
 /*
@@ -84,14 +85,63 @@ fun HistoryScreen(
         }
     }
 
+    // --- STATISTIK HEMAT (UI 1.4.0) ---
+    // Pekerjaan selesai yang ukurannya diketahui menyumbang selisih
+    // masukan-keluaran ke akumulasi hemat persisten. Berkas lama tanpa
+    // data ukuran tidak dihitung (dihitung yang ada saja).
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember { com.ubahkan.app.UbahkanPrefs(context) }
+    var savedTotal by remember { mutableStateOf(prefs.savedBytesTotal) }
+
+    LaunchedEffect(queueState) {
+        val counted = prefs.countedJobIds.toMutableSet()
+        var changed = false
+        queueState.filter { it.status == JobStatus.COMPLETED }.forEach { job ->
+            if (job.id !in counted) {
+                counted += job.id
+                changed = true
+                val inputSize = com.ubahkan.app.getFileSizeFromUri(context, job.inputUri)
+                val outputPaths = (listOfNotNull(job.outputFilePath) + job.outputFilePaths).distinct()
+                val outputSize = outputPaths.sumOf { path -> File(path).takeIf { it.exists() }?.length() ?: 0L }
+                if (inputSize > 0 && outputSize > 0 && outputSize < inputSize) {
+                    prefs.savedBytesTotal += inputSize - outputSize
+                }
+            }
+        }
+        if (changed) {
+            prefs.countedJobIds = counted
+            savedTotal = prefs.savedBytesTotal
+        }
+    }
+
+    // Meta konversi sesi ini per berkas hasil: label "MP4 ke MP3" + persen hemat.
+    val sessionMeta = remember(queueState) {
+        val map = mutableMapOf<String, Pair<String, Int?>>()
+        queueState.filter { it.status == JobStatus.COMPLETED }.forEach { job ->
+            val fromExt = job.originalFileName.substringAfterLast('.', "").uppercase()
+            if (fromExt.isEmpty() || job.targetFormat.isBlank()) return@forEach
+            val label = strings.historyConversionLabel(fromExt, job.targetFormat.uppercase())
+            val inputSize = com.ubahkan.app.getFileSizeFromUri(context, job.inputUri)
+            val outputPaths = (listOfNotNull(job.outputFilePath) + job.outputFilePaths).distinct()
+            outputPaths.forEach { path ->
+                val outFile = File(path)
+                val percent = if (inputSize > 0 && outFile.exists() && outFile.length() in 1 until inputSize) {
+                    ((inputSize - outFile.length()) * 100 / inputSize).toInt()
+                } else null
+                map[outFile.absolutePath] = label to percent
+            }
+        }
+        map
+    }
+
     // --- FILTER STATE ---
     var selectedCategoryId by remember { mutableStateOf("all") }
     val categories = listOf(
         CategoryFilterItem("all", strings.categoryAll),
-        CategoryFilterItem("document", strings.categoryDocument),
-        CategoryFilterItem("image", strings.categoryImage),
         CategoryFilterItem("video", strings.categoryVideo),
-        CategoryFilterItem("audio", strings.categoryAudio)
+        CategoryFilterItem("audio", strings.categoryAudio),
+        CategoryFilterItem("image", strings.categoryImage),
+        CategoryFilterItem("document", strings.categoryDocument)
     )
 
     val filteredFiles = remember(ubahkanFiles, selectedCategoryId) {
@@ -134,8 +184,17 @@ fun HistoryScreen(
                 )
             }
 
+            if (ubahkanFiles.isNotEmpty()) {
+                item {
+                    HistoryStatsCard(
+                        filesCount = ubahkanFiles.size,
+                        savedBytes = savedTotal
+                    )
+                }
+            }
+
             item {
-                UbahkanCategoryFilter(
+                UbahkanTextTabs(
                     categories = categories,
                     selectedCategoryId = selectedCategoryId,
                     onCategorySelected = { selectedCategoryId = it }
@@ -163,13 +222,44 @@ fun HistoryScreen(
                 }
 
                 is HomeHistoryState.HistoryAvailable -> {
-                    items(historyState.files, key = { it.absolutePath }) { file ->
-                        FileHistoryItemCard(
-                            file = file,
-                            onClick = { onFileClick(file) },
-                            onShare = { onShareFile(file) },
-                            onDelete = { onDeleteFile(file) }
-                        )
+                    val groups = listOf(
+                        strings.historyGroupToday to historyState.files.filter { dayBucket(it) == 0 },
+                        strings.historyGroupYesterday to historyState.files.filter { dayBucket(it) == 1 },
+                        strings.historyGroupOlder to historyState.files.filter { dayBucket(it) == 2 }
+                    ).filter { it.second.isNotEmpty() }
+
+                    groups.forEach { (groupLabel, groupFiles) ->
+                        item(key = "label_$groupLabel") {
+                            UbahkanSectionLabel(
+                                text = groupLabel,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                        item(key = "card_$groupLabel") {
+                            Surface(
+                                shape = RoundedCornerShape(22.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                shadowElevation = 2.dp,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                                ) {
+                                    groupFiles.forEachIndexed { idx, file ->
+                                        val meta = sessionMeta[file.absolutePath]
+                                        FileHistoryItemCard(
+                                            file = file,
+                                            onClick = { onFileClick(file) },
+                                            onShare = { onShareFile(file) },
+                                            onDelete = { onDeleteFile(file) },
+                                            conversionLabel = meta?.first,
+                                            savedPercent = meta?.second,
+                                            showDivider = idx < groupFiles.lastIndex
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -208,6 +298,97 @@ fun HistoryScreen(
             contentColor = MaterialTheme.colorScheme.primary
         )
     }
+}
+
+// ============================================================
+// KARTU STATISTIK RIWAYAT (UI 1.4.0)
+// Kartu putih melayang radius 22dp: tiga kolom sama lebar
+// dipisah garis vertikal tipis (berkas, dihemat, offline).
+// ============================================================
+
+@Composable
+private fun HistoryStatsCard(
+    filesCount: Int,
+    savedBytes: Long,
+    modifier: Modifier = Modifier
+) {
+    val strings = AppStrings.current
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HistoryStatColumn(
+                value = filesCount.toString(),
+                label = strings.historyStatFiles,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(36.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+            HistoryStatColumn(
+                value = formatFileSize(savedBytes),
+                label = strings.historyStatSaved,
+                modifier = Modifier.weight(1f)
+            )
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(36.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant)
+            )
+            HistoryStatColumn(
+                value = "100%",
+                label = strings.historyStatOffline,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryStatColumn(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 3.dp)
+        )
+    }
+}
+
+// Kelompok hari berkas: 0 = hari ini, 1 = kemarin, 2 = lebih lama.
+private fun dayBucket(file: File): Int {
+    val fileCal = java.util.Calendar.getInstance().apply { timeInMillis = file.lastModified() }
+    val today = java.util.Calendar.getInstance()
+    fun sameDay(a: java.util.Calendar, b: java.util.Calendar): Boolean =
+        a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR) &&
+            a.get(java.util.Calendar.DAY_OF_YEAR) == b.get(java.util.Calendar.DAY_OF_YEAR)
+    if (sameDay(fileCal, today)) return 0
+    today.add(java.util.Calendar.DAY_OF_YEAR, -1)
+    if (sameDay(fileCal, today)) return 1
+    return 2
 }
 
 // ============================================================
