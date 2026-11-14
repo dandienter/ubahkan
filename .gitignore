@@ -1,0 +1,59 @@
+# Gradle & Build files
+.gradle/
+build/
+app/build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# Local test files - do not upload to GitHub
+app/src/test/
+
+# (Jika Anda memiliki file sampah test terpisah di luar source code utama)
+**/test_sandboxes/
+**/local_tests/
+*.test.out
+
+# Mengabaikan file Markdown dokumentasi update CLI / catatan lokal pribadi Anda
+*.cli.md
+*_update.md
+.continue-here*.md
+PROJECT_HANDOFF*.md
+Morph_Conversion_Engine_Checkup.md
+
+# Ignore UI/UX Handoff docs and local font assets
+docs/Morph_UI_UX_Handoff/
+app/src/main/res/font/
