@@ -21,9 +21,14 @@ jobs:
           gradle-version: '9.6.0'
       - name: Decode release keystore
         env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          B1: ${{ secrets.KEYSTORE_B64_1 }}
+          B2: ${{ secrets.KEYSTORE_B64_2 }}
+          B3: ${{ secrets.KEYSTORE_B64_3 }}
+          B4: ${{ secrets.KEYSTORE_B64_4 }}
+          B5: ${{ secrets.KEYSTORE_B64_5 }}
+          B6: ${{ secrets.KEYSTORE_B64_6 }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > app/ubahkan-release.jks
+          printf '%s' "$B1$B2$B3$B4$B5$B6" | base64 -d > app/ubahkan-release.jks
           echo "ce8224e94fa6eafc4b7d215c984ae03d94a65439eaba27f402d401a636dea23b  app/ubahkan-release.jks" | sha256sum -c -
       - name: Write local.properties
         env:
