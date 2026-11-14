@@ -33,9 +33,14 @@ android {
             // .so disimpan terkompresi di APK agar unduhan lebih kecil
             useLegacyPackaging = true
             // OpenCV dan FFmpegKit sama-sama membawa libc++_shared.so;
-            // tanpa pickFirst build gagal di mergeReleaseNativeLibs
-            // (terbukti di run Actions #21 untuk modul Pindai Dokumen).
+            // tanpa pickFirst build gagal di mergeReleaseNativeLibs.
+            // Merge memeriksa SEMUA ABI di AAR walau abiFilters hanya
+            // arm64 (run #21 gagal di arm64, run #22 di x86_64), jadi
+            // pickFirst wajib untuk keempat ABI.
             pickFirsts += "lib/arm64-v8a/libc++_shared.so"
+            pickFirsts += "lib/armeabi-v7a/libc++_shared.so"
+            pickFirsts += "lib/x86/libc++_shared.so"
+            pickFirsts += "lib/x86_64/libc++_shared.so"
         }
     }
 
