@@ -60,6 +60,7 @@ fun HomeScreen(
     onToolClick: (ToolOperation, String) -> Unit,
     onRetryConversion: (android.net.Uri, String) -> Unit,
     onBannerClick: () -> Unit = {},
+    onScanClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
@@ -374,7 +375,8 @@ fun HomeScreen(
                 )
                 PopularToolsGrid(
                     selectedCategoryId = selectedToolCategory,
-                    onToolClick = onToolClick
+                    onToolClick = onToolClick,
+                    onScanClick = onScanClick
                 )
             }
         }
@@ -477,10 +479,18 @@ private data class PopularTool(
     val icon: ImageVector
 )
 
+private data class PopularCell(
+    val title: String,
+    val description: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit
+)
+
 @Composable
 private fun PopularToolsGrid(
     selectedCategoryId: String,
     onToolClick: (ToolOperation, String) -> Unit,
+    onScanClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
@@ -494,38 +504,49 @@ private fun PopularToolsGrid(
         PopularTool(ToolOperation.SPLIT_PDF, "application/pdf", "document", strings.toolSplitPdfTitle, strings.toolSplitPdfDesc, Icons.Outlined.ContentCopy),
         PopularTool(ToolOperation.MERGE_PDF, "application/pdf", "document", strings.toolMergePdfTitle, strings.toolMergePdfDesc, Icons.Outlined.PictureAsPdf)
     )
-    val visibleTools = if (selectedCategoryId == "all") {
-        popularTools.take(4)
-    } else {
-        popularTools.filter { it.categoryId == selectedCategoryId }
+
+    fun PopularTool.toCell(): PopularCell =
+        PopularCell(title, description, icon) { onToolClick(operation, mimeType) }
+
+    val scanCell = PopularCell(
+        strings.scanTitle,
+        strings.scanDesc,
+        Icons.Outlined.DocumentScanner
+    ) { onScanClick() }
+
+    // Pindai Dokumen tampil sebagai kartu pertama pada kategori
+    // Semua dan Dokumen, dengan perlakuan ToolGridCard yang sama.
+    val visibleCells = when (selectedCategoryId) {
+        "all" -> listOf(scanCell) + popularTools.take(3).map { it.toCell() }
+        "document" -> listOf(scanCell) +
+            popularTools.filter { it.categoryId == "document" }.map { it.toCell() }
+        else -> popularTools.filter { it.categoryId == selectedCategoryId }.map { it.toCell() }
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        visibleTools.chunked(2).forEachIndexed { rowIndex, rowTools ->
+        visibleCells.chunked(2).forEachIndexed { rowIndex, rowCells ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                rowTools.forEachIndexed { colIndex, tool ->
-                    key(tool.operation) {
-                        StaggerReveal(
-                            index = 2 + rowIndex * 2 + colIndex,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            ToolGridCard(
-                                title = tool.title,
-                                description = tool.description,
-                                icon = tool.icon,
-                                onClick = { onToolClick(tool.operation, tool.mimeType) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                rowCells.forEachIndexed { colIndex, cell ->
+                    StaggerReveal(
+                        index = 2 + rowIndex * 2 + colIndex,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        ToolGridCard(
+                            title = cell.title,
+                            description = cell.description,
+                            icon = cell.icon,
+                            onClick = cell.onClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
-                if (rowTools.size == 1) {
+                if (rowCells.size == 1) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }

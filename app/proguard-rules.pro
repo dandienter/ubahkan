@@ -16,3 +16,15 @@
 -keep class androidx.compose.runtime.** { *; }
 -keep class androidx.lifecycle.** { *; }
 -dontwarn androidx.compose.**
+
+# OpenCV (Pindai Dokumen): kelas JNI dan callback native tidak boleh diganti nama
+-keep class org.opencv.** { *; }
+-dontwarn org.opencv.**
+
+# ML Kit OCR (Pindai Dokumen): model bundled dan API teks
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_text.** { *; }
+-keep class com.google.android.gms.internal.mlkit_common.** { *; }
+-dontwarn com.google.mlkit.**
+-dontwarn com.google.android.gms.internal.mlkit_vision_text.**
+-dontwarn com.google.android.gms.internal.mlkit_common.**

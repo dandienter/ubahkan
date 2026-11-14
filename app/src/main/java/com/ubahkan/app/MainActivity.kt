@@ -59,6 +59,7 @@ import com.ubahkan.app.ui.screens.HistoryScreen
 import com.ubahkan.app.ui.screens.ProgressScreen
 import com.ubahkan.app.ui.screens.SettingsScreen
 import com.ubahkan.app.ui.screens.SplashScreen
+import com.ubahkan.app.ui.screens.scan.ScanFlowScreen
 import com.ubahkan.app.ui.screens.FileInfoSheet
 import com.ubahkan.app.ui.screens.ToolActionSheet
 import com.ubahkan.app.ui.screens.ToolActionSheet2
@@ -224,13 +225,15 @@ class MainActivity : ComponentActivity() {
             var currentTab by remember { mutableStateOf(UbahkanTab.Home) }
             var isOnboarding by remember { mutableStateOf(!prefs.onboardingDone) }
             var showProgressScreen by remember { mutableStateOf(false) }
+            var showScanFlow by remember { mutableStateOf(false) }
             var showSplash by remember { mutableStateOf(startWithSplash) }
 
             // Double-back-to-exit (PBI: Back Navigation)
             var backPressedOnce by remember { mutableStateOf(false) }
 
-            // BackHandler: tab non-Home → kembali ke Home; Home → double back exit
-            BackHandler(enabled = isStandaloneMode) {
+            // BackHandler: tab non-Home → kembali ke Home; Home → double back exit.
+            // Nonaktif selama alur Pindai Dokumen tampil (alur punya BackHandler sendiri).
+            BackHandler(enabled = isStandaloneMode && !showScanFlow) {
                 if (currentTab != UbahkanTab.Home) {
                     currentTab = UbahkanTab.Home
                     backPressedOnce = false
@@ -324,6 +327,11 @@ class MainActivity : ComponentActivity() {
                                         Toast.makeText(context, strings.fileNotFoundToast, Toast.LENGTH_SHORT).show()
                                     }
                                 }
+                            )
+                        } else if (showScanFlow) {
+                            ScanFlowScreen(
+                                onClose = { showScanFlow = false },
+                                onSaved = { refreshFiles() }
                             )
                         } else {
                             Scaffold(
@@ -447,7 +455,8 @@ class MainActivity : ComponentActivity() {
                                                     context.startService(serviceIntent)
                                                 }
                                             },
-                                            onBannerClick = { showProgressScreen = true }
+                                            onBannerClick = { showProgressScreen = true },
+                                            onScanClick = { showScanFlow = true }
                                         )
                                     }
 
@@ -458,7 +467,8 @@ class MainActivity : ComponentActivity() {
                                                 filePickerLauncher.launch(mimeType)
                                             },
                                             onConvertClick = { filePickerLauncher.launch("*/*") },
-                                            onBackClick = { currentTab = UbahkanTab.Home }
+                                            onBackClick = { currentTab = UbahkanTab.Home },
+                                            onScanClick = { showScanFlow = true }
                                         )
                                     }
 

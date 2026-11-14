@@ -51,6 +51,7 @@ fun ToolsScreen(
     onPickFileForTool: (ToolOperation, String) -> Unit,
     onConvertClick: () -> Unit,
     onBackClick: () -> Unit,
+    onScanClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
@@ -166,8 +167,26 @@ fun ToolsScreen(
             )
         }
         if (gridMode) {
-            item { ToolsGridGroup(tools = documentTools, baseIndex = 2, onPickFileForTool = onPickFileForTool) }
+            item {
+                ToolsScanDocGrid(
+                    documentTools = documentTools,
+                    baseIndex = 2,
+                    onPickFileForTool = onPickFileForTool,
+                    onScanClick = onScanClick
+                )
+            }
         } else {
+            item {
+                StaggerReveal(index = 2) {
+                    ToolRow(
+                        title = strings.scanTitle,
+                        description = strings.scanDesc,
+                        icon = Icons.Outlined.DocumentScanner,
+                        onClick = onScanClick,
+                        showDivider = true
+                    )
+                }
+            }
             items(documentTools.size, key = { "doc_${documentTools[it].operation}" }) { idx ->
                 val tool = documentTools[idx]
                 StaggerReveal(index = 2 + idx) {
@@ -310,6 +329,59 @@ fun ToolsScreen(
                 detail = strings.toolFormatDetail,
                 icon = Icons.Default.Extension
             )
+        }
+    }
+}
+
+// Grup Dokumen mode Grid: kartu Pindai Dokumen mendahului alat
+// PDF bawaan, semua sebagai ToolGridCard dalam kisi 2 kolom.
+@Composable
+private fun ToolsScanDocGrid(
+    documentTools: List<ToolEntry>,
+    baseIndex: Int,
+    onPickFileForTool: (ToolOperation, String) -> Unit,
+    onScanClick: () -> Unit
+) {
+    val strings = AppStrings.current
+    data class Cell(
+        val title: String,
+        val description: String,
+        val icon: ImageVector,
+        val onClick: () -> Unit
+    )
+
+    val cells = listOf(
+        Cell(strings.scanTitle, strings.scanDesc, Icons.Outlined.DocumentScanner, onScanClick)
+    ) + documentTools.map { tool ->
+        Cell(tool.title, tool.description, tool.icon) {
+            onPickFileForTool(tool.operation, tool.mimeType)
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        cells.chunked(2).forEachIndexed { rowIndex, rowCells ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rowCells.forEachIndexed { colIndex, cell ->
+                    StaggerReveal(
+                        index = baseIndex + rowIndex * 2 + colIndex,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        ToolGridCard(
+                            title = cell.title,
+                            description = cell.description,
+                            icon = cell.icon,
+                            onClick = cell.onClick,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                if (rowCells.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
     }
 }

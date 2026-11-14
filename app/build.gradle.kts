@@ -18,8 +18,8 @@ android {
         applicationId = "com.ubahkan.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.4.0"
+        versionCode = 6
+        versionName = "1.5.0"
 
         // Tekan ukuran APK: hanya arm64-v8a. Dukungan 32-bit
         // (armeabi-v7a) dan x86/x86_64 dilepas sejak 1.4.0.
@@ -97,6 +97,15 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     // SVG Renderer (PBI Sprint 3 - Apache 2.0)
     implementation("com.caverock:androidsvg-aar:1.4")
+
+    // Pindai Dokumen (1.5.0): kamera CameraX untuk tangkap + analisis tepi
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+    // Pindai Dokumen: OpenCV untuk deteksi tepi, warp perspektif, dan filter
+    implementation("org.opencv:opencv:4.10.0")
+    // Pindai Dokumen: OCR ML Kit bundled (model di dalam APK, bekerja offline)
+    implementation("com.google.mlkit:text-recognition:16.0.0")
 
     // Unit Testing
     testImplementation("junit:junit:4.13.2")

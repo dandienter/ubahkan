@@ -10,6 +10,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -880,10 +882,16 @@ fun UbahkanCategoryFilter(
 }
 
 // --------------------------------------------------
-// TEXT TABS  -  tab teks bergaris bawah (UI 1.4.0)
-// Dipakai Beranda (saring alat populer) dan Riwayat (saring
-// kategori): tab aktif teks tinta + garis bawah tinta 2dp,
-// tanpa chip yang terpotong di tepi layar.
+// TEXT TABS  -  tab teks bergaris bawah (UI 1.4.0, dibangun
+// ulang 1.5.0). Dipakai Beranda (saring alat populer) dan
+// Riwayat (saring kategori).
+// Versi lama rusak di perangkat: Box garis bawah memakai
+// fillMaxWidth di dalam Row sehingga tab pertama menelan
+// seluruh lebar dan tab lain terimpit sampai hurufnya
+// membungkus vertikal. Versi ini: Row biasa yang bisa
+// digeser horizontal, tiap tab wrapContentWidth dengan
+// lebar mengikuti teksnya (IntrinsicSize.Max), teks satu
+// baris tanpa bungkus, garis bawah 2dp selebar teks.
 // --------------------------------------------------
 
 @Composable
@@ -899,15 +907,19 @@ fun UbahkanTextTabs(
             modifier = Modifier.align(Alignment.BottomStart)
         )
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             categories.forEach { categoryItem ->
                 val isSelected = selectedCategoryId == categoryItem.id
                 Column(
                     modifier = Modifier
+                        .wrapContentWidth()
+                        .width(IntrinsicSize.Max)
                         .clickable { onCategorySelected(categoryItem.id) }
-                        .padding(top = 2.dp),
+                        .padding(horizontal = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -915,7 +927,10 @@ fun UbahkanTextTabs(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.onBackground
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Box(
@@ -934,9 +949,12 @@ fun UbahkanTextTabs(
 }
 
 // --------------------------------------------------
-// TOOL GRID CARD  -  kartu alat mode kotak (UI 1.4.0)
-// Kartu putih melayang radius 20dp, tinggi seragam 128dp,
-// ikon di ubin biru pucat, judul dan deskripsi maks 2 baris.
+// TOOL GRID CARD  -  kartu alat mode kotak (UI 1.4.0,
+// dilonggarkan 1.5.0). Kartu putih melayang radius 20dp,
+// tinggi seragam 156dp, ikon di ubin biru pucat, judul
+// maks 2 baris, deskripsi 12sp maks 3 baris. Kenaikan
+// tinggi + baris deskripsi menampung skala font besar
+// di HP pengguna agar teks tidak lagi kena titik-titik.
 // Dipakai grid Alat Populer di Beranda dan mode Grid tab Alat.
 // --------------------------------------------------
 
@@ -950,7 +968,7 @@ fun ToolGridCard(
 ) {
     Surface(
         modifier = modifier
-            .height(128.dp)
+            .height(156.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -982,9 +1000,9 @@ fun ToolGridCard(
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = description,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
         }

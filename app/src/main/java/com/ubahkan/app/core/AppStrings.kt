@@ -406,6 +406,66 @@ interface Strings {
     val toolNormalizeDesc: String
     val toolErrNotMedia: String
 
+    // Document Scanner (1.5.0)
+    val scanTitle: String
+    val scanDesc: String
+    val scanCaptureHint: String
+    val scanImportGallery: String
+    val scanCameraDeniedTitle: String
+    val scanCameraDeniedDesc: String
+    val scanAllowCamera: String
+    val scanFlash: String
+    val scanTakePhoto: String
+    val scanCancel: String
+    val scanOpenCvFailed: String
+    val scanCaptureFailed: String
+    val scanAdjustTitle: String
+    val scanAdjustHint: String
+    val scanResetCorners: String
+    val scanNext: String
+    val scanFilterTitle: String
+    val scanBrightnessLabel: String
+    val scanContrastLabel: String
+    val scanUsePage: String
+    val scanProcessing: String
+    val scanFilterOriginal: String
+    val scanFilterGrayscale: String
+    val scanFilterBlackWhite: String
+    val scanFilterWhitePaper: String
+    val scanFilterShadow: String
+    val scanFilterSharpen: String
+    val scanFilterContrastBoost: String
+    val scanFilterColorPop: String
+    val scanFilterSepia: String
+    val scanFilterNegative: String
+    val scanFilterBlueprint: String
+    val scanFilterPhotocopy: String
+    val scanPagesTitle: String
+    fun scanPageNumber(index: Int): String
+    val scanAddPage: String
+    val scanReadText: String
+    val scanSignature: String
+    val scanSavePdf: String
+    val scanNoPages: String
+    val scanDeletePage: String
+    val scanMoveUp: String
+    val scanMoveDown: String
+    val scanSelectPageHint: String
+    val scanOcrTitle: String
+    val scanOcrEmpty: String
+    val scanOcrRunning: String
+    val scanCopyText: String
+    val scanCopiedToast: String
+    val scanSignatureTitle: String
+    val scanSignatureHint: String
+    val scanSignatureClear: String
+    val scanDoneButton: String
+    val scanSignatureAppliedToast: String
+    val scanSavedTitle: String
+    fun scanSavedLocation(name: String): String
+    val scanOpenFile: String
+    val scanSaveFailedToast: String
+
     // Core Validators & Parsers
     val validatorFileNotFound: String
     val validatorNotRegularFile: String
@@ -747,13 +807,13 @@ object IndonesianStrings : Strings {
     override val toolsActionsTitle = "Alat Ukuran dan Potong"
     override val toolsActionsSubtitle = "Kompres ke target ukuran, potong, dan bagi video."
     override val toolCompressVideoTitle = "Kompres Video ke Target"
-    override val toolCompressVideoDesc = "Perkecil sampai ukuran pilihan."
+    override val toolCompressVideoDesc = "Kompres ke ukuran target."
     override val toolCompressImageTitle = "Kompres Gambar ke Target"
-    override val toolCompressImageDesc = "Perkecil JPG di bawah target KB."
+    override val toolCompressImageDesc = "Kompres JPG ke ukuran kecil."
     override val toolTrimTitle = "Potong Video"
-    override val toolTrimDesc = "Ambil bagian dari waktu ke waktu."
+    override val toolTrimDesc = "Potong dari waktu ke waktu."
     override val toolSplitTitle = "Potong Otomatis"
-    override val toolSplitDesc = "Bagi rata, siap buat Status WA."
+    override val toolSplitDesc = "Bagi rata buat Status WA."
     override val toolPickHint = "Ketuk untuk memilih file"
     override val toolStartButton = "Mulai"
     override val toolTargetSizeLabel = "Ukuran target"
@@ -782,7 +842,7 @@ object IndonesianStrings : Strings {
     override fun engineSplittingPdfPage(current: Int, total: Int) = "Memisahkan halaman $current dari $total..."
     override val engineErrPdfRangeInvalid = "Rentang halaman tidak valid."
     override val toolSplitPdfTitle = "Pisah PDF"
-    override val toolSplitPdfDesc = "Satu halaman jadi satu berkas PDF."
+    override val toolSplitPdfDesc = "Satu halaman, satu berkas."
     override val toolPdfRangeLabel = "Rentang halaman"
     override val toolPdfRangeHint = "Kosongkan untuk semua halaman, atau isi misalnya 1-3 atau 1,3,5."
     override val toolErrNotPdf = "File terpilih bukan PDF."
@@ -812,16 +872,16 @@ object IndonesianStrings : Strings {
     override val engineReplacingAudio = "Mengganti audio video..."
     override val engineErrAudioMissing = "Berkas audio pengganti tidak ditemukan."
     override val toolReplaceAudioTitle = "Ganti Audio Video"
-    override val toolReplaceAudioDesc = "Timpa suara video dengan audio lain."
+    override val toolReplaceAudioDesc = "Ganti audio pada video."
     override val toolAudioFileLabel = "Berkas audio pengganti"
     override val engineConvertingHeic = "Mengubah HEIC menjadi JPG..."
     override val engineErrHeicUnsupported = "Konversi HEIC membutuhkan Android 9 atau lebih baru."
     override fun engineErrHeicDecode(msg: String) = "Gagal membaca berkas HEIC: $msg"
     override val toolHeicTitle = "HEIC ke JPG"
-    override val toolHeicDesc = "Foto HEIC menjadi JPG universal."
+    override val toolHeicDesc = "Foto HEIC jadi JPG."
     override val toolErrNotHeic = "File terpilih bukan HEIC atau HEIF."
     override val toolInfoTitle = "Info Berkas"
-    override val toolInfoDesc = "Lihat ukuran dan format berkas."
+    override val toolInfoDesc = "Lihat detail berkas."
     override val infoFormatLabel = "Format"
     override val infoDurationLabel = "Durasi"
     override val infoSizeLabel = "Ukuran"
@@ -833,7 +893,7 @@ object IndonesianStrings : Strings {
     override val infoFailed = "Tidak dapat membaca info berkas ini."
     override val engineNormalizingVolume = "Menormalkan volume..."
     override val toolNormalizeTitle = "Normalisasi Volume"
-    override val toolNormalizeDesc = "Samakan keras suara video atau audio."
+    override val toolNormalizeDesc = "Samakan keras suara."
     override val toolErrNotMedia = "File terpilih bukan video atau audio."
 
     override val validatorFileNotFound = "Berkas output tidak ditemukan di sistem penyimpanan."
@@ -852,6 +912,66 @@ object IndonesianStrings : Strings {
     override val epubErrNoChapterText = "Tidak ditemukan teks bab yang dapat dibaca dalam urutan Spine EPUB."
     override val epubBookTitlePrefix = "JUDUL: "
     override val epubBookAuthorPrefix = "PENULIS: "
+
+    // Document Scanner (1.5.0)
+    override val scanTitle = "Pindai Dokumen"
+    override val scanDesc = "Foto dokumen jadi PDF rapi."
+    override val scanCaptureHint = "Posisikan dokumen di dalam bingkai."
+    override val scanImportGallery = "Impor dari Galeri"
+    override val scanCameraDeniedTitle = "Izin kamera ditolak"
+    override val scanCameraDeniedDesc = "Tanpa izin kamera, kamu tetap bisa mengimpor foto dari galeri."
+    override val scanAllowCamera = "Izinkan Kamera"
+    override val scanFlash = "Lampu Kilat"
+    override val scanTakePhoto = "Jepret Foto"
+    override val scanCancel = "Batalkan pindaian"
+    override val scanOpenCvFailed = "Mesin pemindai gagal dimulai. Coba impor dari galeri."
+    override val scanCaptureFailed = "Gagal mengambil foto. Coba lagi."
+    override val scanAdjustTitle = "Sesuaikan Sudut"
+    override val scanAdjustHint = "Geser titik ke sudut dokumen."
+    override val scanResetCorners = "Atur Ulang"
+    override val scanNext = "Lanjut"
+    override val scanFilterTitle = "Filter Dokumen"
+    override val scanBrightnessLabel = "Kecerahan"
+    override val scanContrastLabel = "Kontras"
+    override val scanUsePage = "Pakai Halaman Ini"
+    override val scanProcessing = "Memproses..."
+    override val scanFilterOriginal = "Asli"
+    override val scanFilterGrayscale = "Abu-abu"
+    override val scanFilterBlackWhite = "Hitam Putih"
+    override val scanFilterWhitePaper = "Kertas Putih"
+    override val scanFilterShadow = "Hilang Bayangan"
+    override val scanFilterSharpen = "Pertajam Teks"
+    override val scanFilterContrastBoost = "Kontras Kuat"
+    override val scanFilterColorPop = "Warna Pop"
+    override val scanFilterSepia = "Sepia"
+    override val scanFilterNegative = "Negatif"
+    override val scanFilterBlueprint = "Blueprint"
+    override val scanFilterPhotocopy = "Fotokopi"
+    override val scanPagesTitle = "Halaman Pindai"
+    override fun scanPageNumber(index: Int) = "Halaman $index"
+    override val scanAddPage = "Tambah Halaman"
+    override val scanReadText = "Baca Teks"
+    override val scanSignature = "Tanda Tangan"
+    override val scanSavePdf = "Simpan PDF"
+    override val scanNoPages = "Belum ada halaman. Tambahkan halaman pertama."
+    override val scanDeletePage = "Hapus halaman"
+    override val scanMoveUp = "Geser ke atas"
+    override val scanMoveDown = "Geser ke bawah"
+    override val scanSelectPageHint = "Ketuk halaman untuk memilihnya sebelum Baca Teks atau Tanda Tangan."
+    override val scanOcrTitle = "Hasil Baca Teks"
+    override val scanOcrEmpty = "Tidak ada teks yang terbaca."
+    override val scanOcrRunning = "Membaca teks..."
+    override val scanCopyText = "Salin Teks"
+    override val scanCopiedToast = "Teks disalin."
+    override val scanSignatureTitle = "Gambar Tanda Tangan"
+    override val scanSignatureHint = "Gambar tanda tanganmu di area ini."
+    override val scanSignatureClear = "Hapus Gambar"
+    override val scanDoneButton = "Selesai"
+    override val scanSignatureAppliedToast = "Tanda tangan ditempel."
+    override val scanSavedTitle = "PDF Tersimpan"
+    override fun scanSavedLocation(name: String) = "Tersimpan sebagai $name di Downloads/Ubahkan."
+    override val scanOpenFile = "Buka"
+    override val scanSaveFailedToast = "Gagal menyimpan PDF. Coba lagi."
 }
 
 object EnglishStrings : Strings {
@@ -1176,13 +1296,13 @@ object EnglishStrings : Strings {
     override val toolsActionsTitle = "Size and Cut Tools"
     override val toolsActionsSubtitle = "Compress to a target size, trim, and split videos."
     override val toolCompressVideoTitle = "Compress Video to Size"
-    override val toolCompressVideoDesc = "Shrink to a chosen target size."
+    override val toolCompressVideoDesc = "Compress to a target size."
     override val toolCompressImageTitle = "Compress Image to Size"
-    override val toolCompressImageDesc = "Shrink JPG under a target KB."
+    override val toolCompressImageDesc = "Compress JPG to a small size."
     override val toolTrimTitle = "Trim Video"
-    override val toolTrimDesc = "Cut a section from time to time."
+    override val toolTrimDesc = "Trim from time to time."
     override val toolSplitTitle = "Auto Split"
-    override val toolSplitDesc = "Even parts, ready for WA Status."
+    override val toolSplitDesc = "Even parts for WA Status."
     override val toolPickHint = "Tap to pick a file"
     override val toolStartButton = "Start"
     override val toolTargetSizeLabel = "Target size"
@@ -1211,7 +1331,7 @@ object EnglishStrings : Strings {
     override fun engineSplittingPdfPage(current: Int, total: Int) = "Splitting page $current of $total..."
     override val engineErrPdfRangeInvalid = "Invalid page range."
     override val toolSplitPdfTitle = "Split PDF"
-    override val toolSplitPdfDesc = "One page becomes its own PDF."
+    override val toolSplitPdfDesc = "One page, its own PDF file."
     override val toolPdfRangeLabel = "Page range"
     override val toolPdfRangeHint = "Leave empty for all pages, or enter e.g. 1-3 or 1,3,5."
     override val toolErrNotPdf = "The selected file is not a PDF."
@@ -1222,7 +1342,7 @@ object EnglishStrings : Strings {
     override val engineBurningSubtitles = "Burning subtitles into video..."
     override val engineErrSubtitleMissing = "Subtitle file not found."
     override val toolHardsubTitle = "Burn Subtitles (Hardsub)"
-    override val toolHardsubDesc = "Burn .srt permanently into video."
+    override val toolHardsubDesc = "Burn .srt into the video."
     override val toolSubtitleFileLabel = "Subtitle file (.srt)"
     override val toolPickCompanionButton = "Pick file"
     override val toolErrCompanionMissing = "Pick the companion file first."
@@ -1247,10 +1367,10 @@ object EnglishStrings : Strings {
     override val engineErrHeicUnsupported = "HEIC conversion requires Android 9 or newer."
     override fun engineErrHeicDecode(msg: String) = "Failed to read the HEIC file: $msg"
     override val toolHeicTitle = "HEIC to JPG"
-    override val toolHeicDesc = "HEIC photos become universal JPG."
+    override val toolHeicDesc = "HEIC photos become JPG."
     override val toolErrNotHeic = "The selected file is not HEIC or HEIF."
     override val toolInfoTitle = "File Info"
-    override val toolInfoDesc = "See size, format, and file details."
+    override val toolInfoDesc = "See file details."
     override val infoFormatLabel = "Format"
     override val infoDurationLabel = "Duration"
     override val infoSizeLabel = "Size"
@@ -1262,7 +1382,7 @@ object EnglishStrings : Strings {
     override val infoFailed = "Could not read info for this file."
     override val engineNormalizingVolume = "Normalizing volume..."
     override val toolNormalizeTitle = "Normalize Volume"
-    override val toolNormalizeDesc = "Even out video or audio loudness."
+    override val toolNormalizeDesc = "Even out loudness."
     override val toolErrNotMedia = "The selected file is not a video or audio file."
 
     override val validatorFileNotFound = "Output file not found in storage."
@@ -1281,6 +1401,66 @@ object EnglishStrings : Strings {
     override val epubErrNoChapterText = "No readable chapter text found in EPUB Spine."
     override val epubBookTitlePrefix = "TITLE: "
     override val epubBookAuthorPrefix = "AUTHOR: "
+
+    // Document Scanner (1.5.0)
+    override val scanTitle = "Scan Document"
+    override val scanDesc = "Turn paper into a tidy PDF."
+    override val scanCaptureHint = "Position the document in the frame."
+    override val scanImportGallery = "Import from Gallery"
+    override val scanCameraDeniedTitle = "Camera permission denied"
+    override val scanCameraDeniedDesc = "Without camera permission, you can still import a photo from the gallery."
+    override val scanAllowCamera = "Allow Camera"
+    override val scanFlash = "Flash"
+    override val scanTakePhoto = "Take Photo"
+    override val scanCancel = "Cancel scan"
+    override val scanOpenCvFailed = "The scanner engine failed to start. Try importing from the gallery."
+    override val scanCaptureFailed = "Failed to take the photo. Try again."
+    override val scanAdjustTitle = "Adjust Corners"
+    override val scanAdjustHint = "Drag the points to the document corners."
+    override val scanResetCorners = "Reset"
+    override val scanNext = "Continue"
+    override val scanFilterTitle = "Document Filter"
+    override val scanBrightnessLabel = "Brightness"
+    override val scanContrastLabel = "Contrast"
+    override val scanUsePage = "Use This Page"
+    override val scanProcessing = "Processing..."
+    override val scanFilterOriginal = "Original"
+    override val scanFilterGrayscale = "Grayscale"
+    override val scanFilterBlackWhite = "Black and White"
+    override val scanFilterWhitePaper = "White Paper"
+    override val scanFilterShadow = "Shadow Removal"
+    override val scanFilterSharpen = "Sharpen Text"
+    override val scanFilterContrastBoost = "Strong Contrast"
+    override val scanFilterColorPop = "Color Pop"
+    override val scanFilterSepia = "Sepia"
+    override val scanFilterNegative = "Negative"
+    override val scanFilterBlueprint = "Blueprint"
+    override val scanFilterPhotocopy = "Photocopy"
+    override val scanPagesTitle = "Scanned Pages"
+    override fun scanPageNumber(index: Int) = "Page $index"
+    override val scanAddPage = "Add Page"
+    override val scanReadText = "Read Text"
+    override val scanSignature = "Signature"
+    override val scanSavePdf = "Save as PDF"
+    override val scanNoPages = "No pages yet. Add your first page."
+    override val scanDeletePage = "Delete page"
+    override val scanMoveUp = "Move up"
+    override val scanMoveDown = "Move down"
+    override val scanSelectPageHint = "Tap a page to select it before Read Text or Signature."
+    override val scanOcrTitle = "Recognized Text"
+    override val scanOcrEmpty = "No text could be recognized."
+    override val scanOcrRunning = "Reading text..."
+    override val scanCopyText = "Copy Text"
+    override val scanCopiedToast = "Text copied."
+    override val scanSignatureTitle = "Draw Signature"
+    override val scanSignatureHint = "Draw your signature in this area."
+    override val scanSignatureClear = "Clear Drawing"
+    override val scanDoneButton = "Done"
+    override val scanSignatureAppliedToast = "Signature applied."
+    override val scanSavedTitle = "PDF Saved"
+    override fun scanSavedLocation(name: String) = "Saved as $name in Downloads/Ubahkan."
+    override val scanOpenFile = "Open"
+    override val scanSaveFailedToast = "Failed to save the PDF. Try again."
 }
 
 val LocalAppStrings = staticCompositionLocalOf<Strings> { IndonesianStrings }
