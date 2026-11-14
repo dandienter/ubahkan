@@ -184,14 +184,14 @@ fun SplashScreen(
                 Text(
                     text = "Ubahkan",
                     fontSize = 31.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Medium,
                     letterSpacing = (-0.6).sp,
                     color = inkColor
                 )
                 Text(
                     text = ".",
                     fontSize = 31.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Medium,
                     color = arrowColor
                 )
             }

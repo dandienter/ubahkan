@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -155,7 +156,7 @@ fun FileInfoSheet(
                     Text(
                         text = strings.toolInfoTitle,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -172,7 +173,7 @@ fun FileInfoSheet(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("×", fontSize = 23.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -219,7 +220,7 @@ private fun InfoRow(label: String, value: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
     }

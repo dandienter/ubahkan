@@ -1,4 +1,3 @@
-
 package com.ubahkan.app.ui.screens
 
 import androidx.compose.animation.animateContentSize
@@ -10,27 +9,72 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.ToolOperation
+import com.ubahkan.app.ui.components.StaggerReveal
 import com.ubahkan.app.ui.components.UbahkanScreenHeader
+import com.ubahkan.app.ui.components.UbahkanSectionLabel
+
+/*
+ * Copyright (C) 2026 Rizki Fauzi
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+// ============================================================
+// TOOLS SCREEN  -  TAB ALAT (UI 1.3.0)
+// Daftar berkelompok sesuai mockup: baris berisi ikon garis
+// di kotak abu lembut, nama Medium, deskripsi satu baris abu,
+// dan chevron kanan. Ketuk baris membuka pemilih berkas untuk
+// operasi itu. Di bawahnya tetap ada kartu info kemampuan.
+// ============================================================
+
+private data class ToolEntry(
+    val operation: ToolOperation,
+    val mimeType: String,
+    val title: String,
+    val description: String,
+    val icon: ImageVector
+)
 
 @Composable
 fun ToolsScreen(
     onPickFileForTool: (ToolOperation, String) -> Unit,
+    onConvertClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val strings = AppStrings.current
+
+    val videoTools = listOf(
+        ToolEntry(ToolOperation.COMPRESS_VIDEO, "video/*", strings.toolCompressVideoTitle, strings.toolCompressVideoDesc, Icons.Outlined.Compress),
+        ToolEntry(ToolOperation.TRIM_VIDEO, "video/*", strings.toolTrimTitle, strings.toolTrimDesc, Icons.Outlined.ContentCut),
+        ToolEntry(ToolOperation.AUTO_SPLIT, "video/*", strings.toolSplitTitle, strings.toolSplitDesc, Icons.Outlined.CallSplit),
+        ToolEntry(ToolOperation.MERGE_VIDEO, "video/*", strings.toolMergeVideoTitle, strings.toolMergeVideoDesc, Icons.Outlined.Layers),
+        ToolEntry(ToolOperation.HARDSUB, "video/*", strings.toolHardsubTitle, strings.toolHardsubDesc, Icons.Outlined.Subtitles),
+        ToolEntry(ToolOperation.CROP_VIDEO, "video/*", strings.toolCropTitle, strings.toolCropDesc, Icons.Outlined.Crop),
+        ToolEntry(ToolOperation.RESIZE_VIDEO, "video/*", strings.toolResizeTitle, strings.toolResizeDesc, Icons.Outlined.AspectRatio),
+        ToolEntry(ToolOperation.MUTE_VIDEO, "video/*", strings.toolMuteTitle, strings.toolMuteDesc, Icons.Outlined.VolumeOff),
+        ToolEntry(ToolOperation.REPLACE_AUDIO, "video/*", strings.toolReplaceAudioTitle, strings.toolReplaceAudioDesc, Icons.Outlined.Audiotrack)
+    )
+    val documentTools = listOf(
+        ToolEntry(ToolOperation.SPLIT_PDF, "application/pdf", strings.toolSplitPdfTitle, strings.toolSplitPdfDesc, Icons.Outlined.ContentCopy),
+        ToolEntry(ToolOperation.MERGE_PDF, "application/pdf", strings.toolMergePdfTitle, strings.toolMergePdfDesc, Icons.Outlined.PictureAsPdf)
+    )
+    val mediaTools = listOf(
+        ToolEntry(ToolOperation.COMPRESS_IMAGE, "image/*", strings.toolCompressImageTitle, strings.toolCompressImageDesc, Icons.Outlined.PhotoSizeSelectLarge),
+        ToolEntry(ToolOperation.HEIC_TO_JPG, "image/*", strings.toolHeicTitle, strings.toolHeicDesc, Icons.Outlined.Image),
+        ToolEntry(ToolOperation.NORMALIZE_VOLUME, "*/*", strings.toolNormalizeTitle, strings.toolNormalizeDesc, Icons.Outlined.GraphicEq),
+        ToolEntry(ToolOperation.FILE_INFO, "*/*", strings.toolInfoTitle, strings.toolInfoDesc, Icons.Default.Info)
+    )
 
     LazyColumn(
         modifier = modifier
@@ -38,12 +82,11 @@ fun ToolsScreen(
             .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(
             top = 20.dp,
-            bottom = 100.dp
+            bottom = 40.dp
         ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // Header  -  sesuai spec: "Tools" + deskripsi singkat
+        // Header
         item {
             UbahkanScreenHeader(
                 title = strings.toolsTitle,
@@ -51,158 +94,77 @@ fun ToolsScreen(
             )
         }
 
-        // Batch 1: alat ukuran dan potong (bisa diketuk, membuka pemilih file)
+        // Konversi berkas biasa (operasi CONVERT)
         item {
-            SectionHeading(
-                title = strings.toolsActionsTitle,
-                subtitle = strings.toolsActionsSubtitle
-            )
+            StaggerReveal(index = 0) {
+                ToolRow(
+                    title = strings.toolConvertTitle,
+                    description = strings.toolConvertDesc,
+                    icon = Icons.Outlined.SwapHoriz,
+                    onClick = onConvertClick,
+                    showDivider = false
+                )
+            }
         }
 
+        // Grup Video
         item {
-            ToolActionCard(
-                title = strings.toolCompressVideoTitle,
-                description = strings.toolCompressVideoDesc,
-                icon = Icons.Default.Compress,
-                onClick = { onPickFileForTool(ToolOperation.COMPRESS_VIDEO, "video/*") }
-            )
+            UbahkanSectionLabel(text = strings.categoryVideo)
+        }
+        items(videoTools.size, key = { "video_${videoTools[it].operation}" }) { idx ->
+            val tool = videoTools[idx]
+            StaggerReveal(index = 1 + idx) {
+                ToolRow(
+                    title = tool.title,
+                    description = tool.description,
+                    icon = tool.icon,
+                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                    showDivider = idx < videoTools.lastIndex
+                )
+            }
         }
 
+        // Grup Dokumen
         item {
-            ToolActionCard(
-                title = strings.toolCompressImageTitle,
-                description = strings.toolCompressImageDesc,
-                icon = Icons.Default.PhotoSizeSelectLarge,
-                onClick = { onPickFileForTool(ToolOperation.COMPRESS_IMAGE, "image/*") }
+            UbahkanSectionLabel(
+                text = strings.categoryDocument,
+                modifier = Modifier.padding(top = 6.dp)
             )
         }
-
-        item {
-            ToolActionCard(
-                title = strings.toolTrimTitle,
-                description = strings.toolTrimDesc,
-                icon = Icons.Default.ContentCut,
-                onClick = { onPickFileForTool(ToolOperation.TRIM_VIDEO, "video/*") }
-            )
+        items(documentTools.size, key = { "doc_${documentTools[it].operation}" }) { idx ->
+            val tool = documentTools[idx]
+            StaggerReveal(index = 2 + idx) {
+                ToolRow(
+                    title = tool.title,
+                    description = tool.description,
+                    icon = tool.icon,
+                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                    showDivider = idx < documentTools.lastIndex
+                )
+            }
         }
 
+        // Grup Gambar dan Audio
         item {
-            ToolActionCard(
-                title = strings.toolSplitTitle,
-                description = strings.toolSplitDesc,
-                icon = Icons.Default.CallSplit,
-                onClick = { onPickFileForTool(ToolOperation.AUTO_SPLIT, "video/*") }
+            UbahkanSectionLabel(
+                text = strings.toolsGroupMedia,
+                modifier = Modifier.padding(top = 6.dp)
             )
         }
-
-        // Batch 2: alat video, PDF, dan audio lanjutan
-        item {
-            SectionHeading(
-                title = strings.toolsActionsBatch2Title,
-                subtitle = strings.toolsActionsBatch2Subtitle
-            )
+        items(mediaTools.size, key = { "media_${mediaTools[it].operation}" }) { idx ->
+            val tool = mediaTools[idx]
+            StaggerReveal(index = 3 + idx) {
+                ToolRow(
+                    title = tool.title,
+                    description = tool.description,
+                    icon = tool.icon,
+                    onClick = { onPickFileForTool(tool.operation, tool.mimeType) },
+                    showDivider = idx < mediaTools.lastIndex
+                )
+            }
         }
 
-        item {
-            ToolActionCard(
-                title = strings.toolMergeVideoTitle,
-                description = strings.toolMergeVideoDesc,
-                icon = Icons.Default.MergeType,
-                onClick = { onPickFileForTool(ToolOperation.MERGE_VIDEO, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolSplitPdfTitle,
-                description = strings.toolSplitPdfDesc,
-                icon = Icons.Default.ContentCopy,
-                onClick = { onPickFileForTool(ToolOperation.SPLIT_PDF, "application/pdf") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolMergePdfTitle,
-                description = strings.toolMergePdfDesc,
-                icon = Icons.Default.PictureAsPdf,
-                onClick = { onPickFileForTool(ToolOperation.MERGE_PDF, "application/pdf") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolHardsubTitle,
-                description = strings.toolHardsubDesc,
-                icon = Icons.Default.Subtitles,
-                onClick = { onPickFileForTool(ToolOperation.HARDSUB, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolCropTitle,
-                description = strings.toolCropDesc,
-                icon = Icons.Default.Crop,
-                onClick = { onPickFileForTool(ToolOperation.CROP_VIDEO, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolResizeTitle,
-                description = strings.toolResizeDesc,
-                icon = Icons.Default.AspectRatio,
-                onClick = { onPickFileForTool(ToolOperation.RESIZE_VIDEO, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolMuteTitle,
-                description = strings.toolMuteDesc,
-                icon = Icons.Default.VolumeOff,
-                onClick = { onPickFileForTool(ToolOperation.MUTE_VIDEO, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolReplaceAudioTitle,
-                description = strings.toolReplaceAudioDesc,
-                icon = Icons.Default.Audiotrack,
-                onClick = { onPickFileForTool(ToolOperation.REPLACE_AUDIO, "video/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolHeicTitle,
-                description = strings.toolHeicDesc,
-                icon = Icons.Default.Image,
-                onClick = { onPickFileForTool(ToolOperation.HEIC_TO_JPG, "image/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolInfoTitle,
-                description = strings.toolInfoDesc,
-                icon = Icons.Default.Info,
-                onClick = { onPickFileForTool(ToolOperation.FILE_INFO, "*/*") }
-            )
-        }
-
-        item {
-            ToolActionCard(
-                title = strings.toolNormalizeTitle,
-                description = strings.toolNormalizeDesc,
-                icon = Icons.Default.GraphicEq,
-                onClick = { onPickFileForTool(ToolOperation.NORMALIZE_VOLUME, "*/*") }
-            )
-        }
-
-        // Conversion Tools Section
+        // Kartu info kemampuan konversi bawaan
         item {
             SectionHeading(
                 title = strings.toolsConversionTitle,
@@ -264,7 +226,7 @@ fun ToolsScreen(
             )
         }
 
-        // Share & Usage Section
+        // Cara lain memakai Ubahkan
         item {
             SectionHeading(
                 title = strings.toolsOtherWaysTitle,
@@ -310,6 +272,68 @@ fun ToolsScreen(
     }
 }
 
+// Baris alat sesuai mockup: ikon garis 16dp di kotak abu lembut
+// radius 10dp, nama Medium, deskripsi satu baris abu, chevron.
+@Composable
+private fun ToolRow(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    showDivider: Boolean = true
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(11.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                modifier = Modifier.size(15.dp)
+            )
+        }
+        if (showDivider) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+    }
+}
+
 @Composable
 private fun SectionHeading(
     title: String,
@@ -321,7 +345,6 @@ private fun SectionHeading(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
 
@@ -330,73 +353,6 @@ private fun SectionHeading(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-@Composable
-private fun ToolActionCard(
-    title: String,
-    description: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    val strings = AppStrings.current
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FeatureIcon(icon)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.UploadFile,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = strings.toolPickHint,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
     }
 }
 
@@ -431,7 +387,6 @@ private fun ToolFeatureCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -484,8 +439,7 @@ private fun InfoFeatureCard(
                 Text(
                     text = title,
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleSmall
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -548,9 +502,7 @@ private fun FormatLabel(
                 vertical = 7.dp
             ),
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
-

@@ -1,16 +1,25 @@
 
 package com.ubahkan.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,11 +27,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ubahkan.app.R
+import com.ubahkan.app.ui.theme.UbahkanDarkBackground
 import java.io.File
 import java.text.DecimalFormat
 import kotlin.math.log10
@@ -51,19 +64,30 @@ fun UbahkanHomeTopBar(
     TopAppBar(
         modifier = modifier,
         title = {
-            // Wordmark minimalis sesuai mockup: "Ubahkan" + titik biru
+            // Baris merek sesuai mockup: kotak hitam berisi logo U Panah
+            // terang, lalu teks "Ubahkan" berbobot Medium.
+            val isDark = MaterialTheme.colorScheme.background == UbahkanDarkBackground
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(MaterialTheme.colorScheme.onBackground),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(
+                            if (isDark) R.drawable.ubahkan_logo else R.drawable.ubahkan_logo_dark
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(21.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(9.dp))
                 Text(
                     text = "Ubahkan",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = ".",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
         },
@@ -82,7 +106,7 @@ fun UbahkanHomeTopBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = Icons.Outlined.Tune,
                         contentDescription = AppStrings.current.tabSettings,
                         tint = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.size(17.dp)
@@ -133,7 +157,7 @@ fun UbahkanScreenHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onBackground
         )
         if (subtitle != null) {
@@ -212,7 +236,7 @@ fun ConversionBanner(
                         Text(
                             text = queueInfo ?: strings.convertingTo(format),
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -281,7 +305,7 @@ fun ConversionBanner(
                 Text(
                     text = "$safeProgress%",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -343,7 +367,7 @@ fun ErrorCard(
                 Text(
                     text = strings.conversionFailed,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
@@ -438,7 +462,7 @@ fun FileHistoryItemCard(
                 Text(
                     text = strings.deleteFileDialogTitle,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Medium
                 )
             },
             text = {
@@ -457,7 +481,7 @@ fun FileHistoryItemCard(
                     Text(
                         text = strings.btnDelete,
                         color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Medium
                     )
                 }
             },
@@ -478,15 +502,15 @@ fun FileHistoryItemCard(
     // Baris riwayat minimalis sesuai mockup: tile ikon kategori netral,
     // nama + metadata, jam di kanan, pemisah garis tipis di bawah.
     val categoryIcon = when (FileCategoryManager.getCategory(file.extension)) {
-        FileCategory.VIDEO -> Icons.Default.Movie
-        FileCategory.AUDIO -> Icons.Default.Audiotrack
-        FileCategory.IMAGE -> Icons.Default.Image
-        FileCategory.PDF -> Icons.Default.PictureAsPdf
-        FileCategory.EBOOK -> Icons.Default.Book
-        FileCategory.SPREADSHEET -> Icons.Default.TableChart
-        FileCategory.ARCHIVE -> Icons.Default.FolderZip
-        FileCategory.CODE -> Icons.Default.Code
-        else -> Icons.Default.Description
+        FileCategory.VIDEO -> Icons.Outlined.Movie
+        FileCategory.AUDIO -> Icons.Outlined.Audiotrack
+        FileCategory.IMAGE -> Icons.Outlined.Image
+        FileCategory.PDF -> Icons.Outlined.PictureAsPdf
+        FileCategory.EBOOK -> Icons.Outlined.Book
+        FileCategory.SPREADSHEET -> Icons.Outlined.TableChart
+        FileCategory.ARCHIVE -> Icons.Outlined.FolderZip
+        FileCategory.CODE -> Icons.Outlined.Code
+        else -> Icons.Outlined.Description
     }
     val timeText = remember(file.lastModified()) {
         val date = java.util.Date(file.lastModified())
@@ -706,7 +730,7 @@ fun EmptyHistoryState(
         Text(
             text = strings.selectYourFile,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
@@ -719,6 +743,106 @@ fun EmptyHistoryState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// --------------------------------------------------
+// MOTION HELPERS  -  gerakan halus sesuai mockup UI 1.3.0
+// Easing keluar cepat lalu melambat lembut (kurva mockup),
+// durasi pendek, jeda berjenjang 55ms antar elemen.
+// --------------------------------------------------
+
+val UbahkanEaseOut = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
+
+@Composable
+fun StaggerReveal(
+    index: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    // rememberSaveable: animasi masuk hanya diputar sekali per sesi layar,
+    // tidak berulang saat item daftar digulir keluar-masuk.
+    var visible by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn(
+            tween(durationMillis = 380, delayMillis = index * 55, easing = UbahkanEaseOut)
+        ) + slideInVertically(
+            animationSpec = tween(durationMillis = 380, delayMillis = index * 55, easing = UbahkanEaseOut)
+        ) { it / 6 }
+    ) {
+        content()
+    }
+}
+
+// Pasangan interactionSource + modifier skala tekan 0.98 untuk
+// tombol utama: tombol terasa merespons tanpa animasi berlebihan.
+@Composable
+fun rememberPressScale(): Pair<MutableInteractionSource, Modifier> {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 140, easing = UbahkanEaseOut),
+        label = "press_scale"
+    )
+    val modifier = Modifier.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+    return interactionSource to modifier
+}
+
+// --------------------------------------------------
+// CATEGORY FILTER CHIPS  -  pil: terpilih hitam, lainnya putih
+// bergaris. Dipakai Beranda (saring alat populer) dan Riwayat.
+// --------------------------------------------------
+
+data class CategoryFilterItem(val id: String, val label: String)
+
+@Composable
+fun UbahkanCategoryFilter(
+    categories: List<CategoryFilterItem>,
+    selectedCategoryId: String,
+    onCategorySelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(vertical = 2.dp)
+    ) {
+        items(categories, key = { it.id }) { categoryItem ->
+            val isSelected = selectedCategoryId == categoryItem.id
+            FilterChip(
+                selected = isSelected,
+                onClick = { onCategorySelected(categoryItem.id) },
+                label = {
+                    Text(
+                        text = categoryItem.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+                    )
+                },
+                shape = RoundedCornerShape(50),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.onBackground,
+                    selectedLabelColor = MaterialTheme.colorScheme.background,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = isSelected,
+                    borderColor = MaterialTheme.colorScheme.outline,
+                    selectedBorderColor = MaterialTheme.colorScheme.onBackground,
+                    borderWidth = 1.dp,
+                    selectedBorderWidth = 1.dp
+                )
+            )
+        }
     }
 }
 

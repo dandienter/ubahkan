@@ -65,7 +65,7 @@ fun WelcomeScreen(
                 ) {
                     Text(
                         text = strings.btnGetStarted,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -107,14 +107,14 @@ fun WelcomeScreen(
                     Text(
                         text = "Ubahkan",
                         style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
 
                     Text(
                         text = "Convert Files, Offline.",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary
                     )
 
@@ -192,7 +192,7 @@ private fun FeatureHighlightRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(

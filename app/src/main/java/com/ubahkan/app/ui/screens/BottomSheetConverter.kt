@@ -30,10 +30,14 @@ import com.ubahkan.app.core.ConversionJobRequest
 import com.ubahkan.app.core.ConversionQueueManager
 import com.ubahkan.app.core.SelectedFileItem
 import com.ubahkan.app.ui.components.UbahkanSectionLabel
+import com.ubahkan.app.ui.components.rememberPressScale
 import com.ubahkan.app.ui.components.formatFileSize
 import com.ubahkan.app.ui.theme.UbahkanInstantBolt
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.SwapHoriz
 
@@ -142,7 +146,7 @@ fun BottomSheetConverter(
                     Text(
                         strings.bottomSheetTitle,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -159,7 +163,7 @@ fun BottomSheetConverter(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("×", fontSize = 23.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -213,7 +217,7 @@ fun BottomSheetConverter(
                                 }
                                 Spacer(Modifier.width(10.dp))
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                                    Text(categoryLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    Text(categoryLabel, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
                                     Text(
                                         "${srcExt.uppercase()} • ${filesInGroup.size} file${if (filesInGroup.size > 1) strings.filesCountSuffix else ""}",
                                         style = MaterialTheme.typography.bodySmall,
@@ -228,7 +232,7 @@ fun BottomSheetConverter(
                                         currentTarget.uppercase().ifBlank { strings.chooseFormat },
                                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                         style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -251,10 +255,10 @@ fun BottomSheetConverter(
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                                 Text(
                                                     targetOption.uppercase(),
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium,
                                                     fontSize = 11.sp
                                                 )
-                                                if (supportsInstant) Text("⚡", color = UbahkanInstantBolt, fontSize = 11.sp)
+                                                if (supportsInstant) Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = UbahkanInstantBolt, modifier = Modifier.size(12.dp))
                                             }
                                         },
                                         shape = RoundedCornerShape(50),
@@ -269,6 +273,22 @@ fun BottomSheetConverter(
                                 }
                             }
 
+                            // Penjelasan singkat format tujuan terpilih
+                            val targetExplain = strings.formatExplain(currentTarget)
+                            if (targetExplain.isNotEmpty()) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                                ) {
+                                    Text(
+                                        text = targetExplain,
+                                        modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                             // Opsi khusus PNG/Gambar ke PDF: Gabung atau Pisah
                             val isImageToPdf = srcExt in listOf("png", "jpg", "jpeg", "webp") && currentTarget.equals("pdf", ignoreCase = true)
                             if (isImageToPdf && filesInGroup.size > 1) {
@@ -283,7 +303,7 @@ fun BottomSheetConverter(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                                            Text(strings.mergeToPdfTitle, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                                            Text(strings.mergeToPdfTitle, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
                                             Text(strings.mergeToPdfDesc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                         Switch(
@@ -334,11 +354,11 @@ fun BottomSheetConverter(
                                                     horizontalArrangement = Arrangement.Center,
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    if (qIdx == 3) Text("⚡", color = UbahkanInstantBolt, fontSize = 11.sp)
+                                                    if (qIdx == 3) Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = UbahkanInstantBolt, modifier = Modifier.size(12.dp))
                                                     Text(
                                                         label,
                                                         style = MaterialTheme.typography.labelMedium,
-                                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Medium,
                                                         color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                                                         maxLines = 1
                                                     )
@@ -361,7 +381,7 @@ fun BottomSheetConverter(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Text("⚡", color = UbahkanInstantBolt, fontSize = 15.sp)
+                                        Icon(imageVector = Icons.Default.Bolt, contentDescription = null, tint = UbahkanInstantBolt, modifier = Modifier.size(16.dp))
                                         Text(
                                             strings.instantLosslessSupported(srcExt, currentTarget),
                                             style = MaterialTheme.typography.labelSmall,
@@ -388,6 +408,7 @@ fun BottomSheetConverter(
                 !targetFormatPerGroup[key].isNullOrBlank()
             }
 
+            val (convertPressSource, convertPressModifier) = rememberPressScale()
             Button(
                 onClick = {
                     val requests = mutableListOf<ConversionJobRequest>()
@@ -444,7 +465,8 @@ fun BottomSheetConverter(
                     onConvertStarted()
                 },
                 enabled = allGroupsConfigured,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                interactionSource = convertPressSource,
+                modifier = convertPressModifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -470,8 +492,8 @@ fun BottomSheetConverter(
                     else -> strings.btnConvertBatch(selectedFiles.size)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("▶", fontSize = 15.sp)
-                    Text(text = label, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(text = label, fontWeight = FontWeight.Medium, fontSize = 15.sp)
                 }
             }
         }

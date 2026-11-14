@@ -6,6 +6,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,11 +31,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ubahkan.app.core.AppStrings
+import com.ubahkan.app.core.ConversionJob
 import com.ubahkan.app.core.ConversionQueueManager
 import com.ubahkan.app.core.JobStatus
 import com.ubahkan.app.core.ToolOperation
 import com.ubahkan.app.sharePartsToWhatsAppStatus
+import com.ubahkan.app.ui.components.UbahkanEaseOut
 import com.ubahkan.app.ui.components.UbahkanLogo
+import com.ubahkan.app.ui.components.UbahkanSectionLabel
+import com.ubahkan.app.ui.components.rememberPressScale
+import kotlin.math.roundToInt
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,6 +73,8 @@ fun ProgressScreen(
 
     // Konfirmasi pembatalan
     var showCancelDialog by remember { mutableStateOf(false) }
+    val (viewPressSource, viewPressModifier) = rememberPressScale()
+    val (backPressSource, backPressModifier) = rememberPressScale()
 
     // Intercept back button to minimize
     BackHandler {
@@ -103,7 +112,7 @@ fun ProgressScreen(
                     Text(
                         text = if (isFinished) strings.titleFinished else strings.titleConversionProgress,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Medium
                     )
                 },
                 navigationIcon = {
@@ -137,7 +146,7 @@ fun ProgressScreen(
                 val currentPercent = currentJob?.progress ?: 0
                 val animatedProgress by animateFloatAsState(
                     targetValue = currentPercent / 100f,
-                    animationSpec = tween(durationMillis = 300, easing = LinearEasing),
+                    animationSpec = tween(durationMillis = 300, easing = UbahkanEaseOut),
                     label = "progressAnim"
                 )
 
@@ -157,25 +166,25 @@ fun ProgressScreen(
                     Text(
                         text = strings.convertingFileProgress,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Text(
-                        text = "$currentPercent%",
+                        text = "${(animatedProgress * 100).roundToInt()}%",
                         style = MaterialTheme.typography.displayLarge.copy(fontSize = 44.sp),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     LinearProgressIndicator(
                         progress = { animatedProgress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -199,7 +208,21 @@ fun ProgressScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                // Antrean pekerjaan: baris ikon + nama + status (gaya mockup)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    UbahkanSectionLabel(text = strings.progressQueueHeader)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(queueState, key = { it.id }) { job ->
+                            QueueJobRow(job = job)
+                        }
+                    }
+                }
 
                 // Tombol Batal
                 OutlinedButton(
@@ -242,7 +265,7 @@ fun ProgressScreen(
                 Text(
                     text = strings.conversionSuccess,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
@@ -267,7 +290,8 @@ fun ProgressScreen(
 
                     Button(
                         onClick = onViewResult,
-                        modifier = Modifier
+                        interactionSource = viewPressSource,
+                        modifier = viewPressModifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -275,7 +299,7 @@ fun ProgressScreen(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text(strings.btnViewResult, fontWeight = FontWeight.Bold)
+                        Text(strings.btnViewResult, fontWeight = FontWeight.Medium)
                     }
 
                     OutlinedButton(
@@ -313,7 +337,7 @@ fun ProgressScreen(
                 Text(
                     text = if (completedCount > 0) strings.conversionPartialSuccess else strings.conversionFailed,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
@@ -341,12 +365,13 @@ fun ProgressScreen(
 
                 Button(
                     onClick = onFinish,
-                    modifier = Modifier
+                    interactionSource = backPressSource,
+                    modifier = backPressModifier
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(strings.btnBackToHome, fontWeight = FontWeight.Bold)
+                    Text(strings.btnBackToHome, fontWeight = FontWeight.Medium)
                 }
             }
 
@@ -379,7 +404,7 @@ private fun WhatsAppStatusShareButton(files: List<File>) {
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(strings.btnShareToWhatsAppStatus, fontWeight = FontWeight.Bold)
+        Text(strings.btnShareToWhatsAppStatus, fontWeight = FontWeight.Medium)
     }
 }
 
@@ -430,7 +455,7 @@ private fun FileTransformationVisual(
                 Text(
                     text = sourceExt,
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -463,10 +488,79 @@ private fun FileTransformationVisual(
                 Text(
                     text = targetExt,
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
         }
+    }
+}
+
+// Baris satu pekerjaan dalam antrean layar proses:
+// ikon berkas di kotak abu, nama + format tujuan, teks status,
+// dan persen kecil untuk yang sedang diproses.
+@Composable
+private fun QueueJobRow(job: ConversionJob) {
+    val strings = AppStrings.current
+    val statusText = when (job.status) {
+        JobStatus.PROCESSING -> job.progressMessage
+        JobStatus.WAITING -> strings.queueWaiting
+        JobStatus.COMPLETED -> strings.queueCompleted
+        JobStatus.FAILED -> job.errorMessage ?: strings.queueFailed
+        JobStatus.CANCELLED -> strings.queueCancelled
+    }
+    val titleText = if (job.targetFormat.isNotBlank()) {
+        "${job.originalFileName} \u2192 ${job.targetFormat.uppercase()}"
+    } else {
+        job.originalFileName
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(11.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (job.status == JobStatus.PROCESSING) {
+                Text(
+                    text = "${job.progress}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }

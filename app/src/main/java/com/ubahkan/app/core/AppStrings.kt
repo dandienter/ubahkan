@@ -16,6 +16,7 @@ interface Strings {
     // Navigation & Common
     val tabHome: String
     val tabTools: String
+    val tabHistory: String
     val tabSettings: String
     val pressBackAgainToExit: String
     val notifPermissionRequiredToast: String
@@ -58,6 +59,7 @@ interface Strings {
     val homeHeroSubtitle: String
     val homeShareHint: String
     val homeCategoryHeader: String
+    val homePopularHeader: String
     val homeHistoryHeader: String
     val homeSavedFooter: String
     fun homeFormatsCount(count: Int): String
@@ -126,6 +128,9 @@ interface Strings {
     val toolFormatDetail: String
     val toolExpand: String
     val toolCollapse: String
+    val toolConvertTitle: String
+    val toolConvertDesc: String
+    val toolsGroupMedia: String
 
     // Settings Screen
     val settingsTitle: String
@@ -177,6 +182,7 @@ interface Strings {
     val btnConvert: String
     fun btnConvertBatch(count: Int): String
     fun btnMergeAndConvert(count: Int): String
+    fun formatExplain(format: String): String
 
     // Conversion Banner & Progress Screen
     fun convertingTo(format: String): String
@@ -195,6 +201,7 @@ interface Strings {
     val titleConversionProgress: String
     val btnMinimize: String
     val convertingFileProgress: String
+    val progressQueueHeader: String
     fun progressBatchFilesCompleted(done: Int, total: Int): String
     val conversionSuccess: String
     val singleFileSuccessDesc: String
@@ -395,7 +402,8 @@ interface Strings {
 
 object IndonesianStrings : Strings {
     override val tabHome = "Beranda"
-    override val tabTools = "Tools"
+    override val tabTools = "Alat"
+    override val tabHistory = "Riwayat"
     override val tabSettings = "Pengaturan"
     override val pressBackAgainToExit = "Tekan sekali lagi untuk keluar"
     override val notifPermissionRequiredToast = "Izin notifikasi diperlukan agar konversi latar belakang berjalan optimal."
@@ -436,6 +444,7 @@ object IndonesianStrings : Strings {
     override val homeHeroSubtitle = "Video, audio, gambar, dan dokumen diubah langsung di HP kamu. Tanpa unggah, tanpa akun."
     override val homeShareHint = "atau bagikan file dari galeri dan aplikasi lain"
     override val homeCategoryHeader = "Kategori"
+    override val homePopularHeader = "Alat Populer"
     override val homeHistoryHeader = "Terakhir dikonversi"
     override val homeSavedFooter = "Hasil tersimpan di Downloads/Ubahkan"
     override fun homeFormatsCount(count: Int) = "$count format"
@@ -470,7 +479,7 @@ object IndonesianStrings : Strings {
     override val categoryCode = "Kode"
     override val categoryOther = "Lainnya"
 
-    override val toolsTitle = "Tools"
+    override val toolsTitle = "Alat"
     override val toolsSubtitle = "Kenali fitur dan kemampuan Ubahkan."
     override val toolsConversionTitle = "Alat Konversi"
     override val toolsConversionSubtitle = "Konversi file bawaan Ubahkan."
@@ -502,6 +511,9 @@ object IndonesianStrings : Strings {
     override val toolFormatDetail = "Video: MP4, MKV, MOV, WEBM, AVI\nAudio: MP3, WAV, FLAC, AAC, M4A, OGG, OPUS\nGambar: PNG, JPG, WEBP, BMP, SVG\nDokumen: PDF, TXT, EPUB"
     override val toolExpand = "Buka"
     override val toolCollapse = "Tutup"
+    override val toolConvertTitle = "Konversi Berkas"
+    override val toolConvertDesc = "Ubah format video, audio, gambar, PDF, dan dokumen lain."
+    override val toolsGroupMedia = "Gambar dan Audio"
 
     override val settingsTitle = "Pengaturan"
     override val settingsSubtitle = "Konfigurasi tampilan dan perilaku Ubahkan."
@@ -553,6 +565,25 @@ object IndonesianStrings : Strings {
     override val btnConvert = "Konversi"
     override fun btnConvertBatch(count: Int) = "Konversi ($count File)"
     override fun btnMergeAndConvert(count: Int) = "Gabung & Konversi ($count File)"
+    override fun formatExplain(format: String): String = when (format.lowercase()) {
+        "mp3" -> "Audio saja dari berkas sumber, ukuran kecil dan bisa diputar di semua perangkat."
+        "m4a" -> "Audio ringkas berkualitas baik, umum dipakai di perangkat Apple."
+        "wav" -> "Audio tanpa kompres, kualitas penuh tetapi ukuran berkas besar."
+        "flac" -> "Audio lossless, kualitas sama persis seperti sumbernya."
+        "ogg", "opus" -> "Audio ringkas berformat terbuka, hemat ukuran."
+        "mp4" -> "Format video paling umum, cocok dibagikan ke mana saja."
+        "mkv" -> "Wadah video fleksibel, cocok untuk kualitas tinggi dan subtitle."
+        "mov" -> "Format video khas Apple, umum dari iPhone dan Mac."
+        "webm" -> "Video ringkas untuk web, ukuran kecil."
+        "gif" -> "Gambar bergerak tanpa suara, pas untuk cuplikan singkat."
+        "jpg", "jpeg" -> "Format foto paling umum, ukuran kecil dan didukung semua aplikasi."
+        "png" -> "Gambar tajam dengan dukungan latar transparan."
+        "webp" -> "Format gambar modern, lebih kecil dari JPG pada kualitas setara."
+        "bmp" -> "Gambar tanpa kompres, kualitas penuh tetapi ukuran besar."
+        "pdf" -> "Dokumen yang tampilannya tetap sama di semua perangkat."
+        "txt" -> "Teks polos tanpa format, bisa dibuka di aplikasi apa saja."
+        else -> ""
+    }
 
     override fun convertingTo(format: String) = "Mengonversi ke ${format.uppercase()}"
     override fun convertingBatchInfo(curr: Int, total: Int) = "Mengonversi ($curr/$total)"
@@ -570,6 +601,7 @@ object IndonesianStrings : Strings {
     override val titleConversionProgress = "Progres Konversi"
     override val btnMinimize = "Minimalkan"
     override val convertingFileProgress = "Mengonversi File..."
+    override val progressQueueHeader = "Antrean"
     override fun progressBatchFilesCompleted(done: Int, total: Int) = "$done dari $total file selesai"
     override val conversionSuccess = "Konversi Berhasil!"
     override val singleFileSuccessDesc = "File Anda telah berhasil dikonversi."
@@ -767,6 +799,7 @@ object IndonesianStrings : Strings {
 object EnglishStrings : Strings {
     override val tabHome = "Home"
     override val tabTools = "Tools"
+    override val tabHistory = "History"
     override val tabSettings = "Settings"
     override val pressBackAgainToExit = "Press back again to exit"
     override val notifPermissionRequiredToast = "Notification permission is required for optimal background conversions."
@@ -807,6 +840,7 @@ object EnglishStrings : Strings {
     override val homeHeroSubtitle = "Video, audio, images, and documents are converted right on your phone. No uploads, no account."
     override val homeShareHint = "or share files from your gallery and other apps"
     override val homeCategoryHeader = "Categories"
+    override val homePopularHeader = "Popular Tools"
     override val homeHistoryHeader = "Recently converted"
     override val homeSavedFooter = "Results are saved to Downloads/Ubahkan"
     override fun homeFormatsCount(count: Int) = if (count == 1) "1 format" else "$count formats"
@@ -873,6 +907,9 @@ object EnglishStrings : Strings {
     override val toolFormatDetail = "Video: MP4, MKV, MOV, WEBM, AVI\nAudio: MP3, WAV, FLAC, AAC, M4A, OGG, OPUS\nImages: PNG, JPG, WEBP, BMP, SVG\nDocuments: PDF, TXT, EPUB"
     override val toolExpand = "Expand"
     override val toolCollapse = "Collapse"
+    override val toolConvertTitle = "Convert File"
+    override val toolConvertDesc = "Change the format of videos, audio, images, PDFs, and other documents."
+    override val toolsGroupMedia = "Image and Audio"
 
     override val settingsTitle = "Settings"
     override val settingsSubtitle = "Configure Ubahkan display and behavior."
@@ -924,6 +961,25 @@ object EnglishStrings : Strings {
     override val btnConvert = "Convert"
     override fun btnConvertBatch(count: Int) = "Convert ($count Files)"
     override fun btnMergeAndConvert(count: Int) = "Merge & Convert ($count Files)"
+    override fun formatExplain(format: String): String = when (format.lowercase()) {
+        "mp3" -> "Audio only from the source file, small in size and playable everywhere."
+        "m4a" -> "Compact audio with good quality, common on Apple devices."
+        "wav" -> "Uncompressed audio, full quality but large in size."
+        "flac" -> "Lossless audio, quality identical to the source."
+        "ogg", "opus" -> "Compact open audio format, small in size."
+        "mp4" -> "The most common video format, easy to share anywhere."
+        "mkv" -> "Flexible video container, great for high quality and subtitles."
+        "mov" -> "Apple video format, common from iPhones and Macs."
+        "webm" -> "Compact video for the web, small in size."
+        "gif" -> "Moving image without sound, great for short clips."
+        "jpg", "jpeg" -> "The most common photo format, small and supported everywhere."
+        "png" -> "Sharp images with transparency support."
+        "webp" -> "Modern image format, smaller than JPG at the same quality."
+        "bmp" -> "Uncompressed image, full quality but large in size."
+        "pdf" -> "A document that looks the same on every device."
+        "txt" -> "Plain text without formatting, opens in any app."
+        else -> ""
+    }
 
     override fun convertingTo(format: String) = "Converting to ${format.uppercase()}"
     override fun convertingBatchInfo(curr: Int, total: Int) = "Converting ($curr/$total)"
@@ -941,6 +997,7 @@ object EnglishStrings : Strings {
     override val titleConversionProgress = "Conversion Progress"
     override val btnMinimize = "Minimize"
     override val convertingFileProgress = "Converting Files..."
+    override val progressQueueHeader = "Queue"
     override fun progressBatchFilesCompleted(done: Int, total: Int) = "$done of $total files completed"
     override val conversionSuccess = "Conversion Successful!"
     override val singleFileSuccessDesc = "Your file has been converted successfully."

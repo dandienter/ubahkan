@@ -16,15 +16,24 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -45,6 +54,7 @@ import com.ubahkan.app.core.ToolOperation
 import com.ubahkan.app.ui.components.UbahkanHomeTopBar
 import com.ubahkan.app.ui.screens.BottomSheetConverter
 import com.ubahkan.app.ui.screens.HomeScreen
+import com.ubahkan.app.ui.screens.HistoryScreen
 import com.ubahkan.app.ui.screens.ProgressScreen
 import com.ubahkan.app.ui.screens.SettingsScreen
 import com.ubahkan.app.ui.screens.SplashScreen
@@ -64,7 +74,7 @@ import android.provider.Settings
  */
 
 enum class UbahkanTab {
-    Home, Tools, Settings
+    Home, Tools, History, Settings
 }
 
 class MainActivity : ComponentActivity() {
@@ -336,7 +346,7 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 strings.tabHome,
                                                 style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = if (currentTab == UbahkanTab.Home) FontWeight.SemiBold else FontWeight.Normal
+                                                fontWeight = if (currentTab == UbahkanTab.Home) FontWeight.Medium else FontWeight.Normal
                                             )
                                         }
                                     )
@@ -345,8 +355,8 @@ class MainActivity : ComponentActivity() {
                                         onClick = { currentTab = UbahkanTab.Tools },
                                         icon = {
                                             Icon(
-                                                if (currentTab == UbahkanTab.Tools) Icons.Default.Build
-                                                else Icons.Outlined.Build,
+                                                if (currentTab == UbahkanTab.Tools) Icons.Default.GridView
+                                                else Icons.Outlined.GridView,
                                                 contentDescription = strings.tabTools
                                             )
                                         },
@@ -354,7 +364,25 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 strings.tabTools,
                                                 style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = if (currentTab == UbahkanTab.Tools) FontWeight.SemiBold else FontWeight.Normal
+                                                fontWeight = if (currentTab == UbahkanTab.Tools) FontWeight.Medium else FontWeight.Normal
+                                            )
+                                        }
+                                    )
+                                    NavigationBarItem(
+                                        selected = currentTab == UbahkanTab.History,
+                                        onClick = { currentTab = UbahkanTab.History },
+                                        icon = {
+                                            Icon(
+                                                if (currentTab == UbahkanTab.History) Icons.Default.History
+                                                else Icons.Outlined.History,
+                                                contentDescription = strings.tabHistory
+                                            )
+                                        },
+                                        label = {
+                                            Text(
+                                                strings.tabHistory,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = if (currentTab == UbahkanTab.History) FontWeight.Medium else FontWeight.Normal
                                             )
                                         }
                                     )
@@ -363,8 +391,8 @@ class MainActivity : ComponentActivity() {
                                         onClick = { currentTab = UbahkanTab.Settings },
                                         icon = {
                                             Icon(
-                                                if (currentTab == UbahkanTab.Settings) Icons.Default.Settings
-                                                else Icons.Outlined.Settings,
+                                                if (currentTab == UbahkanTab.Settings) Icons.Default.Tune
+                                                else Icons.Outlined.Tune,
                                                 contentDescription = strings.tabSettings
                                             )
                                         },
@@ -372,7 +400,7 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 strings.tabSettings,
                                                 style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = if (currentTab == UbahkanTab.Settings) FontWeight.SemiBold else FontWeight.Normal
+                                                fontWeight = if (currentTab == UbahkanTab.Settings) FontWeight.Medium else FontWeight.Normal
                                             )
                                         }
                                     )
@@ -380,20 +408,24 @@ class MainActivity : ComponentActivity() {
                             }
                         ) { innerPadding ->
                             Box(modifier = Modifier.padding(innerPadding)) {
-                                when (currentTab) {
+                                AnimatedContent(
+                                    targetState = currentTab,
+                                    transitionSpec = {
+                                        val forward = targetState.ordinal >= initialState.ordinal
+                                        (fadeIn(animationSpec = tween(250)) + slideInHorizontally(animationSpec = tween(250, easing = FastOutSlowInEasing)) { width -> if (forward) width / 14 else -width / 14 })
+                                            .togetherWith(fadeOut(animationSpec = tween(180)))
+                                    },
+                                    label = "tab_content"
+                                ) { tab ->
+                                when (tab) {
                                     UbahkanTab.Home -> {
                                         HomeScreen(
-                                            ubahkanFiles = ubahkanFiles,
-                                            isRefreshing = isRefreshing,
                                             hasNotificationPermission = hasNotificationPermission,
-                                            onRefresh = { refreshFiles() },
                                             onPickFileClick = { filePickerLauncher.launch("*/*") },
                                             onRequestPermission = { askNotificationPermission() },
-                                            onFileClick = { file -> openFileDirectly(context, file, strings) },
-                                            onShareFile = { file -> shareFileDirectly(context, file, strings) },
-                                            onDeleteFile = { file ->
-                                                file.delete()
-                                                refreshFiles()
+                                            onToolClick = { operation, mimeType ->
+                                                pendingToolOperation = operation
+                                                filePickerLauncher.launch(mimeType)
                                             },
                                             onRetryConversion = { retryUri, retryFormat ->
                                                 val serviceIntent = Intent(context, UbahkanService::class.java).apply {
@@ -409,23 +441,6 @@ class MainActivity : ComponentActivity() {
                                             },
                                             onBannerClick = { showProgressScreen = true }
                                         )
-
-                                        // BottomSheet Picker Trigger
-                                        if (showBottomSheet && selectedFilesForConversion.isNotEmpty()) {
-                                            BottomSheetConverter(
-                                                selectedFiles = selectedFilesForConversion,
-                                                defaultQuality = prefs.qualityPreset,
-                                                onDismiss = {
-                                                    showBottomSheet = false
-                                                    selectedFilesForConversion = emptyList()
-                                                },
-                                                onConvertStarted = {
-                                                    showBottomSheet = false
-                                                    selectedFilesForConversion = emptyList()
-                                                    showProgressScreen = true
-                                                }
-                                            )
-                                        }
                                     }
 
                                     UbahkanTab.Tools -> {
@@ -434,46 +449,24 @@ class MainActivity : ComponentActivity() {
                                                 pendingToolOperation = operation
                                                 filePickerLauncher.launch(mimeType)
                                             },
+                                            onConvertClick = { filePickerLauncher.launch("*/*") },
                                             onBackClick = { currentTab = UbahkanTab.Home }
                                         )
+                                    }
 
-                                        // Sheet konfigurasi alat untuk file terpilih:
-                                        // Batch 1 memakai ToolActionSheet, Batch 2 memakai ToolActionSheet2
-                                        val toolOperation = pendingToolOperation
-                                        if (showToolSheet && toolOperation != null && selectedFilesForConversion.isNotEmpty()) {
-                                            val dismissToolSheet = {
-                                                showToolSheet = false
-                                                pendingToolOperation = null
-                                                selectedFilesForConversion = emptyList()
+                                    UbahkanTab.History -> {
+                                        HistoryScreen(
+                                            ubahkanFiles = ubahkanFiles,
+                                            isRefreshing = isRefreshing,
+                                            onRefresh = { refreshFiles() },
+                                            onPickFileClick = { filePickerLauncher.launch("*/*") },
+                                            onFileClick = { file -> openFileDirectly(context, file, strings) },
+                                            onShareFile = { file -> shareFileDirectly(context, file, strings) },
+                                            onDeleteFile = { file ->
+                                                file.delete()
+                                                refreshFiles()
                                             }
-                                            val toolStarted = {
-                                                showToolSheet = false
-                                                pendingToolOperation = null
-                                                selectedFilesForConversion = emptyList()
-                                                showProgressScreen = true
-                                            }
-                                            when (toolOperation) {
-                                                ToolOperation.FILE_INFO -> FileInfoSheet(
-                                                    file = selectedFilesForConversion.first(),
-                                                    onDismiss = dismissToolSheet
-                                                )
-                                                ToolOperation.COMPRESS_VIDEO,
-                                                ToolOperation.COMPRESS_IMAGE,
-                                                ToolOperation.TRIM_VIDEO,
-                                                ToolOperation.AUTO_SPLIT -> ToolActionSheet(
-                                                    file = selectedFilesForConversion.first(),
-                                                    operation = toolOperation,
-                                                    onDismiss = dismissToolSheet,
-                                                    onStarted = toolStarted
-                                                )
-                                                else -> ToolActionSheet2(
-                                                    files = selectedFilesForConversion,
-                                                    operation = toolOperation,
-                                                    onDismiss = dismissToolSheet,
-                                                    onStarted = toolStarted
-                                                )
-                                            }
-                                        }
+                                        )
                                     }
 
                                     UbahkanTab.Settings -> {
@@ -492,6 +485,62 @@ class MainActivity : ComponentActivity() {
                                             }
                                         )
                                     }
+                                }
+                                }
+                            }
+
+                            // Sheet konversi biasa: dibuka dari Beranda, tab Alat, atau Riwayat
+                            if (showBottomSheet && selectedFilesForConversion.isNotEmpty()) {
+                                BottomSheetConverter(
+                                    selectedFiles = selectedFilesForConversion,
+                                    defaultQuality = prefs.qualityPreset,
+                                    onDismiss = {
+                                        showBottomSheet = false
+                                        selectedFilesForConversion = emptyList()
+                                    },
+                                    onConvertStarted = {
+                                        showBottomSheet = false
+                                        selectedFilesForConversion = emptyList()
+                                        showProgressScreen = true
+                                    }
+                                )
+                            }
+
+                            // Sheet alat untuk berkas terpilih: Batch 1 memakai
+                            // ToolActionSheet, Batch 2 ToolActionSheet2, info FileInfoSheet
+                            val toolOperation = pendingToolOperation
+                            if (showToolSheet && toolOperation != null && selectedFilesForConversion.isNotEmpty()) {
+                                val dismissToolSheet = {
+                                    showToolSheet = false
+                                    pendingToolOperation = null
+                                    selectedFilesForConversion = emptyList()
+                                }
+                                val toolStarted = {
+                                    showToolSheet = false
+                                    pendingToolOperation = null
+                                    selectedFilesForConversion = emptyList()
+                                    showProgressScreen = true
+                                }
+                                when (toolOperation) {
+                                    ToolOperation.FILE_INFO -> FileInfoSheet(
+                                        file = selectedFilesForConversion.first(),
+                                        onDismiss = dismissToolSheet
+                                    )
+                                    ToolOperation.COMPRESS_VIDEO,
+                                    ToolOperation.COMPRESS_IMAGE,
+                                    ToolOperation.TRIM_VIDEO,
+                                    ToolOperation.AUTO_SPLIT -> ToolActionSheet(
+                                        file = selectedFilesForConversion.first(),
+                                        operation = toolOperation,
+                                        onDismiss = dismissToolSheet,
+                                        onStarted = toolStarted
+                                    )
+                                    else -> ToolActionSheet2(
+                                        files = selectedFilesForConversion,
+                                        operation = toolOperation,
+                                        onDismiss = dismissToolSheet,
+                                        onStarted = toolStarted
+                                    )
                                 }
                             }
                         }

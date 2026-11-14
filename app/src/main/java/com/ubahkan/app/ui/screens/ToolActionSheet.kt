@@ -11,22 +11,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallSplit
-import androidx.compose.material.icons.filled.Compress
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.Audiotrack
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.CallSplit
+import androidx.compose.material.icons.outlined.Compress
+import androidx.compose.material.icons.outlined.AspectRatio
+import androidx.compose.material.icons.outlined.Audiotrack
+import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ContentCut
-import androidx.compose.material.icons.filled.Crop
-import androidx.compose.material.icons.filled.MergeType
-import androidx.compose.material.icons.filled.PictureAsPdf
-import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.PhotoSizeSelectLarge
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
+import androidx.compose.material.icons.outlined.Crop
+import androidx.compose.material.icons.outlined.MergeType
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.Subtitles
+import androidx.compose.material.icons.outlined.VolumeOff
+import androidx.compose.material.icons.outlined.PhotoSizeSelectLarge
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -184,22 +185,22 @@ fun ToolActionSheet(
         ToolOperation.CONVERT -> strings.bottomSheetTitle
     }
     val icon: ImageVector = when (operation) {
-        ToolOperation.COMPRESS_VIDEO -> Icons.Default.Compress
-        ToolOperation.COMPRESS_IMAGE -> Icons.Default.PhotoSizeSelectLarge
-        ToolOperation.TRIM_VIDEO -> Icons.Default.ContentCut
-        ToolOperation.AUTO_SPLIT -> Icons.Default.CallSplit
-        ToolOperation.MERGE_VIDEO -> Icons.Default.MergeType
-        ToolOperation.SPLIT_PDF -> Icons.Default.ContentCopy
-        ToolOperation.MERGE_PDF -> Icons.Default.PictureAsPdf
-        ToolOperation.HARDSUB -> Icons.Default.Subtitles
-        ToolOperation.CROP_VIDEO -> Icons.Default.Crop
-        ToolOperation.RESIZE_VIDEO -> Icons.Default.AspectRatio
-        ToolOperation.MUTE_VIDEO -> Icons.Default.VolumeOff
-        ToolOperation.REPLACE_AUDIO -> Icons.Default.Audiotrack
-        ToolOperation.HEIC_TO_JPG -> Icons.Default.Image
+        ToolOperation.COMPRESS_VIDEO -> Icons.Outlined.Compress
+        ToolOperation.COMPRESS_IMAGE -> Icons.Outlined.PhotoSizeSelectLarge
+        ToolOperation.TRIM_VIDEO -> Icons.Outlined.ContentCut
+        ToolOperation.AUTO_SPLIT -> Icons.Outlined.CallSplit
+        ToolOperation.MERGE_VIDEO -> Icons.Outlined.MergeType
+        ToolOperation.SPLIT_PDF -> Icons.Outlined.ContentCopy
+        ToolOperation.MERGE_PDF -> Icons.Outlined.PictureAsPdf
+        ToolOperation.HARDSUB -> Icons.Outlined.Subtitles
+        ToolOperation.CROP_VIDEO -> Icons.Outlined.Crop
+        ToolOperation.RESIZE_VIDEO -> Icons.Outlined.AspectRatio
+        ToolOperation.MUTE_VIDEO -> Icons.Outlined.VolumeOff
+        ToolOperation.REPLACE_AUDIO -> Icons.Outlined.Audiotrack
+        ToolOperation.HEIC_TO_JPG -> Icons.Outlined.Image
         ToolOperation.FILE_INFO -> Icons.Default.Info
-        ToolOperation.NORMALIZE_VOLUME -> Icons.Default.GraphicEq
-        ToolOperation.CONVERT -> Icons.Default.SwapHoriz
+        ToolOperation.NORMALIZE_VOLUME -> Icons.Outlined.GraphicEq
+        ToolOperation.CONVERT -> Icons.Outlined.SwapHoriz
     }
 
     // State konfigurasi per operasi
@@ -355,7 +356,7 @@ fun ToolActionSheet(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     val sizeText = if (file.sizeBytes > 0) " - ${formatFileSize(file.sizeBytes)}" else ""
@@ -373,7 +374,7 @@ fun ToolActionSheet(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("×", fontSize = 23.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(imageVector = Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -531,7 +532,7 @@ fun ToolActionSheet(
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
-                Text(text = strings.toolStartButton, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(text = strings.toolStartButton, fontWeight = FontWeight.Medium, fontSize = 15.sp)
             }
         }
     }
@@ -549,7 +550,7 @@ private fun ToolOptionChip(
         label = {
             Text(
                 text = label,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (selected) FontWeight.Medium else FontWeight.Medium,
                 fontSize = 12.sp
             )
         },

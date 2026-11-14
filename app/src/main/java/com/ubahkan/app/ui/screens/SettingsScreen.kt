@@ -103,7 +103,7 @@ fun SettingsScreen(
                                 Text(
                                     text = title,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
                                 )
                             },
                             shape = RoundedCornerShape(12.dp),
@@ -148,7 +148,7 @@ fun SettingsScreen(
                                 Text(
                                     text = label,
                                     style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
                                     maxLines = 1
                                 )
                             },
@@ -201,7 +201,7 @@ fun SettingsScreen(
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
                                 maxLines = 1
                             )
                         }
@@ -252,7 +252,7 @@ fun SettingsScreen(
                             Text(
                                 text = strings.keepNameTitle,
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -286,7 +286,7 @@ fun SettingsScreen(
                             Text(
                                 text = strings.closeShareTitle,
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -317,7 +317,7 @@ fun SettingsScreen(
                             Text(
                                 text = strings.batteryOptTitle,
                                 style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -350,7 +350,7 @@ fun SettingsScreen(
                         Text(
                             text = strings.aboutSectionTitle,
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
@@ -401,7 +401,7 @@ fun SettingsScreen(
                                 Text(
                                     text = strings.licensesSectionTitle,
                                     style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
@@ -453,7 +453,7 @@ private fun OpenSourceLicensesDialog(onDismiss: () -> Unit) {
             Text(
                 text = strings.licensesSectionTitle,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
@@ -500,7 +500,7 @@ private fun OpenSourceLicensesDialog(onDismiss: () -> Unit) {
             TextButton(onClick = onDismiss) {
                 Text(
                     text = strings.btnClose,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -526,7 +526,7 @@ private fun LicenseItemCard(
             Text(
                 text = name,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
@@ -577,7 +577,7 @@ private fun SettingsSectionCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
