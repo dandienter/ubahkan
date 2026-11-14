@@ -51,6 +51,7 @@ import com.ubahkan.app.core.OutputManager
 import com.ubahkan.app.core.SelectedFileItem
 import com.ubahkan.app.core.Strings
 import com.ubahkan.app.core.ToolOperation
+import com.ubahkan.app.core.UpdateChecker
 import com.ubahkan.app.ui.components.UbahkanHomeTopBar
 import com.ubahkan.app.ui.screens.BottomSheetConverter
 import com.ubahkan.app.ui.screens.HomeScreen
@@ -203,6 +204,13 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val lifecycleOwner = LocalLifecycleOwner.current
             val prefs = remember { UbahkanPrefs(context) }
+
+            // Pemeriksa pembaruan: pulihkan status tersimpan, lalu cek
+            // otomatis bila cek terakhir sudah lewat 12 jam (diam bila gagal).
+            LaunchedEffect(Unit) {
+                UpdateChecker.init(context.applicationContext)
+                UpdateChecker.checkOnStart(context.applicationContext)
+            }
 
             // Reactive Theme & Language State
             var currentThemeOption by remember { mutableStateOf(prefs.themeOption) }

@@ -179,6 +179,13 @@ interface Strings {
     val aboutSectionTitle: String
     fun aboutVersion(version: String): String
     val aboutAuthor: String
+    val updateCheckTitle: String
+    fun updateAvailableTitle(version: String): String
+    val updateAvailableDesc: String
+    val updateNowButton: String
+    val updateStatusNever: String
+    val updateStatusChecking: String
+    val updateStatusUpToDate: String
     val licensesSectionTitle: String
     val licensesSectionSubtitle: String
     val licensesDialogIntro: String
@@ -578,6 +585,13 @@ object IndonesianStrings : Strings {
     override val aboutSectionTitle = "Tentang Ubahkan"
     override fun aboutVersion(version: String) = "Versi $version · Offline File Converter"
     override val aboutAuthor = "Oleh @dandisubhani_"
+    override val updateCheckTitle = "Periksa Pembaruan"
+    override fun updateAvailableTitle(version: String) = "Versi $version tersedia"
+    override val updateAvailableDesc = "Unduh versi terbaru untuk fitur dan perbaikan paling baru."
+    override val updateNowButton = "Perbarui"
+    override val updateStatusNever = "Belum pernah diperiksa"
+    override val updateStatusChecking = "Sedang memeriksa"
+    override val updateStatusUpToDate = "Sudah versi terbaru"
     override val licensesSectionTitle = "Lisensi Open Source"
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & pustaka pihak ketiga"
     override val licensesDialogIntro = "Ubahkan didistribusikan di bawah GNU General Public License v3.0 (GPL-3.0) dan menggunakan pustaka open-source berikut:"
@@ -1000,6 +1014,13 @@ object EnglishStrings : Strings {
     override val aboutSectionTitle = "About Ubahkan"
     override fun aboutVersion(version: String) = "Version $version · Offline File Converter"
     override val aboutAuthor = "By @dandisubhani_"
+    override val updateCheckTitle = "Check for Updates"
+    override fun updateAvailableTitle(version: String) = "Version $version available"
+    override val updateAvailableDesc = "Download the latest version for the newest features and fixes."
+    override val updateNowButton = "Update"
+    override val updateStatusNever = "Never checked"
+    override val updateStatusChecking = "Checking"
+    override val updateStatusUpToDate = "Already up to date"
     override val licensesSectionTitle = "Open Source Licenses"
     override val licensesSectionSubtitle = "GPL-3.0, Apache 2.0 & third-party libraries"
     override val licensesDialogIntro = "Ubahkan is distributed under the GNU General Public License v3.0 (GPL-3.0) and uses the following open-source libraries:"

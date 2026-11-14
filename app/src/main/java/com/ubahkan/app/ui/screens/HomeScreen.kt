@@ -1,5 +1,7 @@
 package com.ubahkan.app.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +29,8 @@ import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.ConversionQueueManager
 import com.ubahkan.app.core.JobStatus
 import com.ubahkan.app.core.ToolOperation
+import com.ubahkan.app.core.UpdateChecker
+import com.ubahkan.app.core.UpdateStatus
 import com.ubahkan.app.ui.components.CategoryFilterItem
 import com.ubahkan.app.ui.components.ConversionBanner
 import com.ubahkan.app.ui.components.ErrorCard
@@ -62,6 +66,7 @@ fun HomeScreen(
 
     val engineState by UbahkanEngine.currentStatus.collectAsState()
     val queueState by ConversionQueueManager.queueState.collectAsState()
+    val updateStatus by UpdateChecker.status.collectAsState()
 
     val activeJob = remember(queueState) { queueState.firstOrNull { it.status == JobStatus.PROCESSING } }
     val failedJobs = remember(queueState) { queueState.filter { it.status == JobStatus.FAILED } }
@@ -76,6 +81,7 @@ fun HomeScreen(
     }
     var batteryBannerDismissed by remember { mutableStateOf(prefs.dismissBatteryWarning) }
     var showBatteryGuideDialog by remember { mutableStateOf(false) }
+    var dismissedUpdateVersion by remember { mutableStateOf(prefs.dismissedUpdateTag) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -254,6 +260,97 @@ fun HomeScreen(
                                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                             ) {
                                 Text(strings.btnLearnHow, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- 3b. BANNER PEMBARUAN TERSEDIA ---
+        val availableUpdate = updateStatus as? UpdateStatus.Available
+        if (availableUpdate != null && dismissedUpdateVersion != availableUpdate.version) {
+            item {
+                // Banner pembaruan gaya kartu modern, satu bahasa dengan banner baterai.
+                Surface(
+                    shape = RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.SystemUpdate,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(11.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = strings.updateAvailableTitle(availableUpdate.version),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = strings.updateAvailableDesc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    dismissedUpdateVersion = availableUpdate.version
+                                    prefs.dismissedUpdateTag = availableUpdate.version
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Button(
+                                onClick = {
+                                    runCatching {
+                                        context.startActivity(
+                                            Intent(Intent.ACTION_VIEW, Uri.parse(availableUpdate.downloadUrl))
+                                        )
+                                    }
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.height(36.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground,
+                                    contentColor = MaterialTheme.colorScheme.background
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
+                            ) {
+                                Text(strings.updateNowButton, fontSize = 12.sp)
                             }
                         }
                     }

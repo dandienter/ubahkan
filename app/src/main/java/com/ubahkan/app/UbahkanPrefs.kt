@@ -50,4 +50,21 @@ class UbahkanPrefs(context: Context) {
     var dismissBatteryWarning: Boolean
         get() = prefs.getBoolean("dismiss_battery_warning", false)
         set(value) = prefs.edit().putBoolean("dismiss_battery_warning", value).apply()
+
+    // --- PEMERIKSA PEMBARUAN ---
+    var lastUpdateCheck: Long // Waktu cek versi terakhir (epoch millis), 0 = belum pernah
+        get() = prefs.getLong("last_update_check", 0L)
+        set(value) = prefs.edit().putLong("last_update_check", value).apply()
+
+    var updateAvailableTag: String? // Versi terbaru yang diketahui tersedia (tanpa awalan "v")
+        get() = prefs.getString("update_available_tag", null)
+        set(value) = prefs.edit().putString("update_available_tag", value).apply()
+
+    var updateDownloadUrl: String? // URL unduh APK rilis terbaru (atau halaman rilis)
+        get() = prefs.getString("update_download_url", null)
+        set(value) = prefs.edit().putString("update_download_url", value).apply()
+
+    var dismissedUpdateTag: String? // Versi yang bannernya sudah ditutup pengguna
+        get() = prefs.getString("dismissed_update_tag", null)
+        set(value) = prefs.edit().putString("dismissed_update_tag", value).apply()
 }

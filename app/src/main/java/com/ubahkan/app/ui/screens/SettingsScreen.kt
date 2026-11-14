@@ -30,6 +30,8 @@ import com.ubahkan.app.UbahkanPrefs
 import com.ubahkan.app.core.AppStrings
 import com.ubahkan.app.core.EnglishStrings
 import com.ubahkan.app.core.IndonesianStrings
+import com.ubahkan.app.core.UpdateChecker
+import com.ubahkan.app.core.UpdateStatus
 import com.ubahkan.app.ui.components.UbahkanScreenHeader
 import com.ubahkan.app.ui.theme.UbahkanBlue
 
@@ -56,6 +58,8 @@ fun SettingsScreen(
     var selectedLanguage by remember(currentLanguage) {
         mutableStateOf(currentLanguage ?: prefs.appLanguage)
     }
+    val updateStatus by UpdateChecker.status.collectAsState()
+
     var keepName by remember { mutableStateOf(prefs.keepOriginalName) }
     var closeShare by remember { mutableStateOf(prefs.closeAfterShare) }
     var qualityPreset by remember { mutableStateOf(prefs.qualityPreset) }
@@ -250,6 +254,33 @@ fun SettingsScreen(
                     title = strings.licensesSectionTitle,
                     desc = strings.licensesSectionSubtitle,
                     onClick = { showLicensesDialog = true }
+                )
+
+                SettingsGroupDivider(indent = false)
+
+                // Periksa Pembaruan: ketuk untuk cek manual; bila ada versi
+                // baru, ketuk yang sama membuka halaman unduhnya.
+                SettingsNavRow(
+                    icon = Icons.Outlined.SystemUpdate,
+                    title = strings.updateCheckTitle,
+                    desc = when (val s = updateStatus) {
+                        is UpdateStatus.Available -> strings.updateAvailableTitle(s.version)
+                        UpdateStatus.Checking -> strings.updateStatusChecking
+                        UpdateStatus.UpToDate -> strings.updateStatusUpToDate
+                        UpdateStatus.Unknown -> strings.updateStatusNever
+                    },
+                    onClick = {
+                        val s = updateStatus
+                        if (s is UpdateStatus.Available) {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(s.downloadUrl))
+                                )
+                            }
+                        } else {
+                            UpdateChecker.checkNow(context)
+                        }
+                    }
                 )
 
                 SettingsGroupDivider(indent = false)
