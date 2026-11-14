@@ -296,7 +296,7 @@ class MainActivity : ComponentActivity() {
                         } else {
                             Scaffold(
                             topBar = {
-                                // Top bar hanya di Home — Tools dan Settings punya header sendiri
+                                // Top bar hanya di Home  -  Tools dan Settings punya header sendiri
                                 if (currentTab == UbahkanTab.Home) {
                                     UbahkanHomeTopBar(
                                         onSettingsClick = { currentTab = UbahkanTab.Settings }

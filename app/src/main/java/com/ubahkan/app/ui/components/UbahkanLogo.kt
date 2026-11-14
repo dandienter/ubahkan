@@ -14,7 +14,7 @@ import com.ubahkan.app.R
 import com.ubahkan.app.ui.theme.UbahkanDarkBackground
 
 /**
- * Logo Ubahkan — "U Panah": huruf U geometris dengan mata panah
+ * Logo Ubahkan  -  "U Panah": huruf U geometris dengan mata panah
  * biru di ujung batang kanan. Varian gelap dipilih saat skema warna
  * aktif berlatar gelap, mengikuti pola deteksi tema BottomSheetConverter.
  */

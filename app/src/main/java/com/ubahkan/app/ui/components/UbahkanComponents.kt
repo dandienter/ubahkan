@@ -98,7 +98,7 @@ fun UbahkanHomeTopBar(
 }
 
 // ============================================================
-// SECTION LABEL — label kecil uppercase berjarak (mockup)
+// SECTION LABEL  -  label kecil uppercase berjarak (mockup)
 // ============================================================
 
 @Composable
@@ -645,7 +645,7 @@ fun EmptyHistoryState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Circular action element — 124dp sesuai spec §7.3
+        // Circular action element  -  124dp sesuai spec §7.3
         Box(
             modifier = Modifier
                 .size(124.dp)
@@ -654,7 +654,7 @@ fun EmptyHistoryState(
                 .clickable { onPickFileClick() },
             contentAlignment = Alignment.Center
         ) {
-            // Outer ring — border circle with subtle stroke
+            // Outer ring  -  border circle with subtle stroke
             Box(
                 modifier = Modifier
                     .size(124.dp)
@@ -681,7 +681,7 @@ fun EmptyHistoryState(
                     modifier = Modifier.size(40.dp)
                 )
 
-                // Plus badge — pojok kanan bawah folder icon
+                // Plus badge  -  pojok kanan bawah folder icon
                 Box(
                     modifier = Modifier
                         .size(20.dp)

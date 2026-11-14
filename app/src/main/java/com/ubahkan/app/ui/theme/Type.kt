@@ -7,7 +7,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 // ============================================================
-// UBAHKAN DESIGN SYSTEM — TYPOGRAPHY v2.0 (MINIMALIS)
+// UBAHKAN DESIGN SYSTEM  -  TYPOGRAPHY v2.0 (MINIMALIS)
 // Tidak ada berkas font kustom di res/font, jadi memakai sans
 // bawaan platform dengan hierarki berat seperti mockup:
 // judul besar semibold/bold, label kecil uppercase berjarak.
@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
 val UbahkanFontFamily = FontFamily.Default
 
 val UbahkanTypography = Typography(
-    // Judul hero beranda — besar dan rapat, seperti mockup
+    // Judul hero beranda  -  besar dan rapat, seperti mockup
     displayLarge = TextStyle(
         fontFamily = UbahkanFontFamily,
         fontWeight = FontWeight.Bold,
@@ -94,7 +94,7 @@ val UbahkanTypography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.sp
     ),
-    // Label seksi kecil — dipakai uppercase dengan jarak huruf lebar
+    // Label seksi kecil  -  dipakai uppercase dengan jarak huruf lebar
     labelSmall = TextStyle(
         fontFamily = UbahkanFontFamily,
         fontWeight = FontWeight.Bold,

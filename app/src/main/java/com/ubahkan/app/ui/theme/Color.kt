@@ -3,7 +3,7 @@ package com.ubahkan.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ============================================================
-// UBAHKAN DESIGN SYSTEM — COLOR TOKENS v2.0 (MINIMALIS)
+// UBAHKAN DESIGN SYSTEM  -  COLOR TOKENS v2.0 (MINIMALIS)
 // Palet mockup: latar putih tulang, tinta hitam hangat,
 // abu hangat sebagai sekunder, satu aksen biru.
 // Ungu/indigo/pink dari identitas lama sudah dibuang total.
@@ -33,7 +33,7 @@ val UbahkanSecondary      = UbahkanGray       // Netral hangat, bukan lagi ungu 
 val UbahkanAccentPink     = UbahkanBlue       // Nama lama dipertahankan; pink sudah dibuang
 
 // --- Instant Bolt ---
-val UbahkanInstantBolt    = Color(0xFFF5B51B)   // Ikon petir Instant — SELALU KUNING
+val UbahkanInstantBolt    = Color(0xFFF5B51B)   // Ikon petir Instant  -  SELALU KUNING
 
 // --- Semantic ---
 val UbahkanSuccess        = Color(0xFF249B69)   // Berhasil

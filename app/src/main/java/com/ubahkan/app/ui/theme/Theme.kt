@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // ============================================================
-// UBAHKAN DESIGN SYSTEM — THEME v2.0 (MINIMALIS)
+// UBAHKAN DESIGN SYSTEM  -  THEME v2.0 (MINIMALIS)
 // Skema warna mengikuti token di Color.kt: satu aksen biru,
 // netral hangat, tombol primer hitam ditangani di level layar.
 // ============================================================
@@ -86,7 +86,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 // ============================================================
-// SHAPE TOKENS — selaras mockup minimalis
+// SHAPE TOKENS  -  selaras mockup minimalis
 // kartu 16dp, tombol 16dp, chip pill, sheet 28dp di atas
 // ============================================================
 val UbahkanShapes = Shapes(

@@ -195,7 +195,7 @@ fun BottomSheetConverter(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Category header — tile netral + ikon biru (gaya mockup)
+                            // Category header  -  tile netral + ikon biru (gaya mockup)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
                                     modifier = Modifier.size(38.dp),

@@ -75,7 +75,7 @@ fun SettingsScreen(
         contentPadding = PaddingValues(top = 20.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header — tanpa back button (bottom nav sudah ada)
+        // Header  -  tanpa back button (bottom nav sudah ada)
         item {
             UbahkanScreenHeader(
                 title = strings.settingsTitle,

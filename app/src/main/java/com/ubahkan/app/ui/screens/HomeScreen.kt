@@ -51,7 +51,7 @@ import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.ui.unit.sp
 
 // ============================================================
-// HOME SCREEN — STATE MODEL
+// HOME SCREEN  -  STATE MODEL
 // Sesuai UBAHKAN_UI_UX_SPEC.md Section 7.5
 // ============================================================
 
@@ -471,7 +471,7 @@ fun UbahkanCategoryFilter(
 }
 
 // ============================================================
-// EMPTY STATE — logo + teks, gaya minimalis
+// EMPTY STATE  -  logo + teks, gaya minimalis
 // ============================================================
 
 @Composable
@@ -517,7 +517,7 @@ fun UbahkanEmptyFileState(
 }
 
 // ============================================================
-// HERO BERANDA — kicker, judul besar, tombol Pilih File hitam
+// HERO BERANDA  -  kicker, judul besar, tombol Pilih File hitam
 // Sesuai mockup minimalis layar 1
 // ============================================================
 
@@ -590,7 +590,7 @@ private fun HomeHero(
 }
 
 // ============================================================
-// GRID KATEGORI 2 KOLOM — ikon garis biru, gaya mockup
+// GRID KATEGORI 2 KOLOM  -  ikon garis biru, gaya mockup
 // Ketuk = filter riwayat, ketuk lagi = reset ke semua
 // ============================================================
 

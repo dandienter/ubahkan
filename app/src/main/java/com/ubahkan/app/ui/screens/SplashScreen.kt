@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ============================================================
-// SPLASH SCREEN — animasi satu kali jalan, total ±1,4 detik
+// SPLASH SCREEN  -  animasi satu kali jalan, total ±1,4 detik
 // Samakan pratinjau splash.html:
 // 1) U digambar progresif dari ujung kiri atas (trim path, 0,7 dtk)
 // 2) Mata panah biru pop/spring mulai ±0,55 dtk
@@ -124,7 +124,7 @@ fun SplashScreen(
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Logo U Panah — geometri sama dengan drawable logo (kanvas 108)
+            // Logo U Panah  -  geometri sama dengan drawable logo (kanvas 108)
             Canvas(modifier = Modifier.size(150.dp)) {
                 val s = size.width / 108f
 
@@ -155,7 +155,7 @@ fun SplashScreen(
                     )
                 }
 
-                // Mata panah — pop dengan poros di pangkal panah (75, 22)
+                // Mata panah  -  pop dengan poros di pangkal panah (75, 22)
                 if (arrowScale.value > 0f) {
                     val pivot = Offset(75f * s, 22f * s)
                     withTransform({
@@ -209,7 +209,7 @@ fun SplashScreen(
             )
         }
 
-        // Footer kecil — penanda offline
+        // Footer kecil  -  penanda offline
         Text(
             text = strings.homeKicker,
             fontSize = 11.5.sp,

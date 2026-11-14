@@ -219,7 +219,7 @@ object EpubParser {
             .replace("&quot;", "\"", ignoreCase = true)
             .replace("&apos;", "'", ignoreCase = true)
             .replace("&#39;", "'", ignoreCase = true)
-            .replace("&mdash;", "—", ignoreCase = true)
+            .replace("&mdash;", " - ", ignoreCase = true)
             .replace("&ndash;", "–", ignoreCase = true)
             .replace("&hellip;", "…", ignoreCase = true)
             .replace("&lsquo;", "‘", ignoreCase = true)

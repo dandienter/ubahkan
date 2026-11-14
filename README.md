@@ -26,15 +26,15 @@ Aplikasi konverter umumnya bekerja dengan mengunggah berkasmu ke server orang la
 
 ## Yang bisa dilakukan sekarang
 
-**Video** — ubah format (MP4, MKV, MOV, WEBM, AVI, GIF), ambil audionya saja, mode Instan untuk pindah wadah tanpa mengubah kualitas.
+**Video**  -  ubah format (MP4, MKV, MOV, WEBM, AVI, GIF), ambil audionya saja, mode Instan untuk pindah wadah tanpa mengubah kualitas.
 
-**Audio** — ubah format (MP3, WAV, FLAC, AAC, M4A, OGG, OPUS) dengan pilihan kualitas.
+**Audio**  -  ubah format (MP3, WAV, FLAC, AAC, M4A, OGG, OPUS) dengan pilihan kualitas.
 
-**Gambar** — ubah format gambar, jadikan PDF, dan sebaliknya: halaman PDF jadi gambar, perkecil ukuran PDF, SVG jadi PNG/JPG/WEBP.
+**Gambar**  -  ubah format gambar, jadikan PDF, dan sebaliknya: halaman PDF jadi gambar, perkecil ukuran PDF, SVG jadi PNG/JPG/WEBP.
 
-**Dokumen** — EPUB jadi TXT, gambar dan PDF saling tukar.
+**Dokumen**  -  EPUB jadi TXT, gambar dan PDF saling tukar.
 
-**Cara kerja sehari-hari** — banyak berkas diproses sekaligus (dikelompokkan otomatis per format asal), berkas bisa dikirim langsung dari aplikasi lain lewat menu Bagikan, proses jalan di latar belakang dengan notifikasi progres, dan semua hasil rapi di satu folder: `Downloads/Ubahkan`.
+**Cara kerja sehari-hari**  -  banyak berkas diproses sekaligus (dikelompokkan otomatis per format asal), berkas bisa dikirim langsung dari aplikasi lain lewat menu Bagikan, proses jalan di latar belakang dengan notifikasi progres, dan semua hasil rapi di satu folder: `Downloads/Ubahkan`.
 
 ## Sedang dibangun
 
@@ -51,7 +51,7 @@ Peta jalan rilis berikutnya, dikerjakan terbuka di repo ini:
 
 1. Buka Ubahkan, ketuk **Pilih File**
 2. Pilih format tujuan dan kualitas
-3. Ketuk **Konversi Sekarang** — hasil ada di `Downloads/Ubahkan`
+3. Ketuk **Konversi Sekarang**  -  hasil ada di `Downloads/Ubahkan`
 
 Panduan lengkap per fitur tersedia di dalam aplikasi, menu **Panduan**.
 
@@ -61,7 +61,7 @@ APK tersedia di halaman [Actions](https://github.com/dandienter/ubahkan/actions)
 
 ## Teknologi
 
-Kotlin · Jetpack Compose · FFmpegKit Full · Android PdfRenderer — semua pemrosesan lokal di perangkat.
+Kotlin · Jetpack Compose · FFmpegKit Full · Android PdfRenderer  -  semua pemrosesan lokal di perangkat.
 
 ## Lisensi dan asal-usul
 

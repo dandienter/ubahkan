@@ -42,7 +42,7 @@ fun ToolsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // Header — sesuai spec: "Tools" + deskripsi singkat
+        // Header  -  sesuai spec: "Tools" + deskripsi singkat
         item {
             UbahkanScreenHeader(
                 title = strings.toolsTitle,
